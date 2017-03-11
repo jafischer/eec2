@@ -1,0 +1,284 @@
+require 'aws-sdk'
+require 'trollop'
+
+class Ec2Wrapper
+  # Tried to make Ec2Wrapper inherit from Aws::EC2::Client, but couldn't get that to work. So we'll expose the
+  # EC2 client instead.
+  attr_accessor :ec2
+
+  PRICE_LIST_FILE = 'ec2-pricelist.json'
+
+  def initialize(global_parser, options)
+    Aws.use_bundled_cert!
+
+    aws_options               = {}
+    aws_options[:region]      = options[:region] unless options[:region].nil?
+    aws_options[:credentials] = Aws::Credentials.new(options[:key], options[:secret]) unless options[:key].nil?
+    Aws.config.update aws_options unless aws_options.empty?
+
+    begin
+      @aws_dir = "#{Dir.home}/.aws"
+
+      if !File.exists? "#{@aws_dir}/config" and (options[:region].nil? or options[:key].nil? or options[:secret].nil?)
+        raise Aws::Errors::MissingRegionError
+      end
+
+      @ec2 = Aws::EC2::Client.new
+
+      # Now that we've successfully initialized ec2, save the config:
+      unless File.exists? "#{@aws_dir}/config"
+        Dir.mkdir "#{@aws_dir}" unless Dir.exists? "#{@aws_dir}"
+
+        $stderr.puts "Creating #{Dir.home.gsub /\\/, '/'}/.aws/config"
+        File.open("#{@aws_dir}/config", 'w') do |f|
+          contents = <<-EOS
+          [default]
+          output = json
+          region = #{options[:region]}
+          EOS
+          f.puts contents.gsub /^  */, ''
+        end
+
+        $stderr.puts "Creating #{Dir.home.gsub /\\/, '/'}/.aws/credentials"
+        File.open("#{@aws_dir}/credentials", 'w') do |f|
+          contents = <<-EOS
+          [default]
+          aws_access_key_id = #{options[:key]}
+          aws_secret_access_key = #{options[:secret]}
+          EOS
+          f.puts contents.gsub /^  */, ''
+        end
+      end
+
+    rescue Aws::Errors::MissingRegionError, Aws::Errors::MissingCredentialsError
+      c1, c2 = '', ''
+      c1, c2 = "\e[1;40;33m", "\e[0m" if $stdout.isatty
+
+      $stderr.puts c1
+      $stderr.puts "Looks like this is the first time you've run this script."
+      $stderr.puts 'As a one-time configuration step: please run it again, specifying the AWS region and'
+      $stderr.puts 'credentials (see below for help),'
+      $stderr.puts c2
+      global_parser.educate $stderr
+      exit 1
+    end
+  end
+
+
+  def get_instance_info(names)
+    non_wildcard_names = {}
+    names.each do |name|
+      non_wildcard_names[name] = true unless name.include? '*'
+    end
+
+    if names.empty?
+      resp = @ec2.describe_instances
+    else
+      resp = @ec2.describe_instances filters: [{ name: 'tag:Name', values: names }]
+    end
+
+    name_width     = 0
+    instance_infos = []
+
+    resp.reservations.each do |reservation|
+      reservation.instances.each do |instance|
+        instance_info = {
+          name:        '<unnamed>',
+          id:          instance.instance_id,
+          state:       instance.state.name,
+          state_code:  instance.state.code,
+          launch_time: instance.launch_time,
+          public_ip:   instance.public_ip_address.nil? ? '<n/a>' : instance.public_ip_address,
+          private_ip:  instance.private_ip_address.nil? ? '<n/a>' : instance.private_ip_address,
+          login_user:  'ec2-user',
+          type:        instance.instance_type,
+          region:      instance.placement.availability_zone,
+          tenancy:     instance.placement.tenancy,
+          key:         instance.key_name,
+          key_path:    "#{Dir.home}/.ssh/#{instance.key_name}.pem"
+        }
+        instance.tags.each do |tag|
+          if tag.key == 'Name' and !tag.value.empty?
+            instance_info[:name] = tag.value
+          elsif tag.key == 'login_user'
+            instance_info[:login_user] = tag.value
+          end
+        end
+
+        degraded = (instance_info[:state_code] & 256) != 0
+
+        if $stdout.isatty
+          # red=31 green=32 yellow=33 blue=34 pink=35 cyan=36 grey=37 black=38
+          case instance_info[:state_code] & ~256
+            # 0 (pending)
+            when 0
+              bold, bg, fg = 1, degraded ? 41 : 40, 33
+            # 16 (running)
+            when 16
+              bold, bg, fg = 1, degraded ? 41 : 40, 32
+            # 32 (shutting-down)
+            when 32
+              bold, bg, fg = 0, 47, 31
+            # 48 (terminated)
+            when 48
+              bold, bg, fg = 0, 47, 30
+            # 64 (stopping)
+            when 64
+              bold, bg, fg = 0, 40, 31
+            # 80 (stopped).
+            when 80
+              bold, bg, fg = 1, 40, 31
+            else
+              bold, bg, fg = 0, degraded ? 41 : 40, 35
+          end
+
+          instance_info[:color_start] = "\e[#{bold};#{bg};#{fg}m"
+          instance_info[:color_end]   = "\e[0m"
+        else
+          instance_info[:color_start] = ''
+          instance_info[:color_end]   = ''
+        end
+
+        instance_info[:colorized_state] = ("#{instance_info[:color_start]}" +
+          "#{instance_info[:state]}" +
+          "#{degraded ? '*' : ''}" +
+          "#{instance_info[:color_end]}").ljust(11 + instance_info[:color_start].length + instance_info[:color_end].length)
+
+        name_width = [name_width, instance_info[:name].length].max
+
+        # Keep track of which non-wildcard names have been found.
+        non_wildcard_names.delete instance_info[:name] if non_wildcard_names.include? instance_info[:name]
+
+        instance_infos.push instance_info
+      end
+    end
+
+    instance_infos.sort! do |a, b|
+      # This will properly sort instances with a numeric suffix, so that instance_9 will appear before instance_10
+      if (a[:name].sub /_[^_]*$/, '') == (b[:name].sub /_[^_]*$/, '')
+        (a[:name].sub /.*_/, '').to_i <=> (b[:name].sub /.*_/, '').to_i
+      else
+        a[:name] <=> b[:name]
+      end
+    end
+
+    raise "No instances match '#{names.join ' '}'" if instance_infos.empty? unless names.empty?
+    raise "No instances found named: '#{non_wildcard_names.keys.join ' '}'" unless non_wildcard_names.empty?
+
+    return instance_infos, name_width
+  end
+
+
+  def get_instance_cost(instance_info)
+    if @price_list.nil?
+      # Get the pricing list for AmazonEC2
+      # See https://aws.amazon.com/blogs/aws/new-aws-price-list-api/
+
+      # If user's copy of pricelist exists, use it. Also, if for some reason the pricelist doesn't exist in the script dir,
+      # then create and use one in the user's dir.
+      # TODO: eventually, check the timestamp of the file and refresh if it's past a certain age.
+      price_list_file = "#{@aws_dir}/#{PRICE_LIST_FILE}"
+
+      if !File.exists? price_list_file
+        script_path = File.expand_path File.dirname(__FILE__)
+        $stderr.puts 'Cached price list not found, retrieving from AWS URL... please wait.'
+
+        # On Windows, OpenSSL (used by Net::HTTP) needs to know where the certificate authorities file is:
+        # This cacert.pem file came from: https://curl.haxx.se/ca/cacert.pem
+        ENV['SSL_CERT_FILE'] = "#{script_path}/cacert.pem" if File.exists? "#{script_path}/cacert.pem"
+
+        uri                  = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
+        response             = Net::HTTP.get_response uri
+
+        raise "Failed to get AWS price list: response code #{response.code}:\n#{response.body}" if response.code.to_i < 200 or response.code.to_i > 299
+
+        File.open(price_list_file, 'w') do |f|
+          f.write response.body
+        end
+
+        # This script just reduces the size of the pricelist file: No big deal if it doesn't exist or if node isn't installed.
+        begin
+          _ = `node #{script_path}/prune-aws-pricelist.js #{price_list_file}`
+        rescue Errno::ENOENT
+          # ignored
+        end
+
+        @price_list = JSON.parse response.body
+      else
+        File.open(price_list_file, 'r') do |f|
+          @price_list = JSON.parse(f.read)
+        end
+      end
+    end
+
+    @price_list['products'].each do |sku, product|
+      # TODO: hard-coding US East for now; there's currently a mismatch between how regions are specified in EC2 and how
+      # they're specified in the pricelist data.
+      if product['attributes']['location'] == 'US East (N. Virginia)' and
+        product['attributes']['instanceType'] == instance_info[:type]
+
+        if product['attributes']['tenancy'] == instance_info[:tenancy] or
+          (product['attributes']['tenancy'] == 'Shared' and instance_info[:tenancy] == 'default')
+          # TODO: Until I can find out how to determine whether an instance is Reserved of On-Demand, we'll use the On-Demand pricing.
+          unless @price_list['terms']['OnDemand'][sku].nil?
+            # OnDemand terms have only one entry, so just grab the first one (same for priceDimensions):
+            unit = @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['unit']
+            if unit != 'Hrs'
+              $stderr.puts "WARNING: Instance #{instance_info[:name]}'s price is measured in '#{unit}', not hours."
+              $stderr.flush
+            end
+            return @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['pricePerUnit']['USD'].to_f
+          end
+        end
+      end
+    end
+
+    $stderr.puts "WARNING: no price data found for instance type #{instance_info[:type]}"
+    0.0
+  end
+
+
+  def run_instances(names, options)
+    resp = @ec2.run_instances({
+                                min_count:          names.count,
+                                max_count:          names.count,
+                                image_id:           options[:image],
+                                key_name:           options[:key],
+                                security_group_ids: [options[:sg]],
+                                instance_type:      options[:type],
+                                subnet_id:          options[:subnet]
+                              })
+
+    i = 0
+    resp.instances.each do |inst|
+      @ec2.create_tags({
+                         resources: [inst.instance_id],
+                         tags:      [
+                                      { key: 'Name', value: names[i] },
+                                      { key: 'login_user', value: options[:login] }
+                                    ]
+                       })
+      i += 1
+    end
+  end
+
+  def terminate_instances(names, options)
+    instance_infos, _ = get_instance_info names
+    instance_ids      = []
+    puts 'About to terminate the following instances:'
+    instance_infos.each { |i| instance_ids.push i[:id]; puts i[:name] }
+    unless options[:force]
+      print 'Are you sure? '
+      input = $stdin.gets
+      return unless input.start_with? 'y'
+    end
+    @ec2.terminate_instances(instance_ids: instance_ids)
+  end
+
+  def rename_instance(instance_id, new_name)
+    @ec2.create_tags({
+                       resources: [instance_id],
+                       tags:      [{ key: 'Name', value: new_name }]
+                     })
+  end
+end

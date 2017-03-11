@@ -1,3 +1,6 @@
 #!/usr/bin/env ruby
 
-require 
+require 'eec2'
+
+cmd = GlobalCommandWrapper.new ARGV
+cmd.run_command
