@@ -27,19 +27,21 @@ class RenCommand < SubCommand
     wildcard = false
     if (args[0].include? '*') or (args[1].include? '*')
       sub_cmd_usage 'ERROR: both names must contain wildcard' if (args[0].include? '*') != (args[1].include? '*') unless (args[1].empty?)
-      sub_cmd_usage 'ERROR: wildcard support is limited to prefix only (e.g. eec2 ren oldprefix-* newprefix-*)' unless (args[0].end_with? '*') and (args[1].end_with? '*' or args[1].empty?)
+      sub_cmd_usage 'ERROR: wildcard support is limited to prefix only (e.g. eec2 ren old-* new-*)' unless (args[0].end_with? '*') and (args[1].end_with? '*' or args[1].empty?)
       wildcard = true
     end
 
     instance_infos, _ = @ec2_wrapper.get_instance_info [args[0]]
 
+    # Need to make local copy of args, because if we attempt to modify args itself with a .sub! call, we get "can't modify frozen String (RuntimeError)"
+    local_args = [ args[0].dup, args[1].dup ]
     if wildcard
-      args[0].sub! '*', ''
-      args[1].sub! '*', ''
+      local_args[0].sub! '*', ''
+      local_args[1].sub! '*', ''
     end
 
     instance_infos.each do |i|
-      new_name = wildcard ? i[:name].sub(args[0], args[1]) : args[1]
+      new_name = wildcard ? i[:name].sub(local_args[0], local_args[1]) : local_args[1]
       @ec2_wrapper.rename_instance i[:id], new_name
     end
   end

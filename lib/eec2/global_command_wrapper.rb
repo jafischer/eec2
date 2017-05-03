@@ -1,16 +1,6 @@
-#!/usr/bin/env ruby
-
-# AWS SDK: see http://docs.aws.amazon.com/sdkforruby/api/index.html
-# And http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html specifically for the EC2 client.
-require 'aws-sdk'
-
 # Trollop: a command-line argument parser that I prefer over 'optparse'.
 # See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
-
-require 'json'
-require 'net/http'
-require 'uri'
 
 # Our modules:
 require 'eec2/ec2_wrapper'
@@ -30,18 +20,18 @@ class GlobalCommandWrapper
 
     # noinspection RubyStringKeysInHashInspection
     @sub_commands     = {
-      'ls'     => lambda { |global_parser, global_options| ListCommand.new(global_parser, global_options) },
-      'start'  => lambda { |global_parser, global_options| StartCommand.new(global_parser, global_options) },
-      'stop'   => lambda { |global_parser, global_options| StopCommand.new(global_parser, global_options) },
-      'ssh'    => lambda { |global_parser, global_options| SshCommand.new(global_parser, global_options) },
-      'scp'    => lambda { |global_parser, global_options| ScpCommand.new(global_parser, global_options) },
-      'ren'    => lambda { |global_parser, global_options| RenCommand.new(global_parser, global_options) },
       'create' => lambda { |global_parser, global_options| CreateCommand.new(global_parser, global_options) },
       'delete' => lambda { |global_parser, global_options| DeleteCommand.new(global_parser, global_options) },
+      'ls'     => lambda { |global_parser, global_options| ListCommand.new(global_parser, global_options) },
+      'ren'    => lambda { |global_parser, global_options| RenCommand.new(global_parser, global_options) },
+      'scp'    => lambda { |global_parser, global_options| ScpCommand.new(global_parser, global_options) },
+      'ssh'    => lambda { |global_parser, global_options| SshCommand.new(global_parser, global_options) },
+      'start'  => lambda { |global_parser, global_options| StartCommand.new(global_parser, global_options) },
+      'stop'   => lambda { |global_parser, global_options| StopCommand.new(global_parser, global_options) },
     }
 
     # Directly placing #{@sub_commands.keys} in the string doesn't work, because (I think) @xxx is scoped to
-    # the Parser object in the do block below.
+    # the Parser object in the do block below. So we need to create a variable in this outer scope.
     sub_command_names = @sub_commands.keys
 
     @global_parser = Trollop::Parser.new do
@@ -90,13 +80,4 @@ class GlobalCommandWrapper
 
     sub_command.perform @args
   end
-end
-
-
-#==================================
-# Main
-
-if __FILE__ == $0
-  cmd = GlobalCommandWrapper.new ARGV
-  cmd.run_command
 end

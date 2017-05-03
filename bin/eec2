@@ -1,6 +1,16 @@
 #!/usr/bin/env ruby
 
-require 'eec2'
+# Setting this environment variable before the first HTTPS call doesn't work; it needs to be set before the
+# Gems are loaded.
+if ENV['SSL_CERT_FILE'].nil?
+  # On Windows, OpenSSL (used by Net::HTTP) needs to know where the certificate authorities file is:
+  # This file came from: https://curl.haxx.se/ca/cacert.pem
+  script_path = File.expand_path File.dirname(__FILE__)
+  cert_file = "#{script_path}/../lib/eec2/cacert.pem"
+  ENV['SSL_CERT_FILE'] = cert_file if File.exists? cert_file
+end
+
+require 'eec2/global_command_wrapper.rb'
 
 cmd = GlobalCommandWrapper.new ARGV
 cmd.run_command

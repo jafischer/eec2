@@ -29,6 +29,13 @@ class ScpCommand < SubCommand
 
     instance_map = {}
     key_file     = nil
+    if $stdout.isatty
+      color_start = "\e[1;32m"
+      color_end   = "\e[0m"
+    else
+      color_start = ""
+      color_end   = ""
+    end
 
     args.each do |arg|
       # First, convert any backslashes to forward slashes.
@@ -82,7 +89,10 @@ class ScpCommand < SubCommand
             end
           end
         else
-          source_args.push arg
+          # On Windows, the scp command that I use (the one that comes with Git) doesn't work well with backslashes.
+          # For instance, "scp .\somefile <host>:" will correctly copy the file, but it keeps the backslash in the name!
+          # So you end up with a file on the remote system named ".\somefile".
+          source_args.push arg.gsub /\\/, '/'
         end
       end
 

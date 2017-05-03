@@ -1,13 +1,29 @@
+# AWS SDK: see http://docs.aws.amazon.com/sdkforruby/api/index.html
+# And http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html specifically for the EC2 client.
 require 'aws-sdk'
+
+# Trollop: a command-line argument parser that I prefer over 'optparse'.
+# See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
 
+
+require 'json'
+require 'net/http'
+require 'uri'
+
+
+# A wrapper class for Aws::EC2, providing some useful extra functionality.
 class Ec2Wrapper
-  # Tried to make Ec2Wrapper inherit from Aws::EC2::Client, but couldn't get that to work. So we'll expose the
-  # EC2 client instead.
+  # @!attribute [r] ec2
+  #   @return [Aws::EC2::Client] the EC2 client object
   attr_accessor :ec2
 
-  PRICE_LIST_FILE = 'ec2-pricelist.json'
+  PRICE_LIST_FILE_NAME = 'ec2-price-list.json'
 
+  # Initialize method.
+  #
+  # @param [Trollop::Parser] global_parser
+  # @param [Hash] options Contains optional :region, :key, and :secret.
   def initialize(global_parser, options)
     Aws.use_bundled_cert!
 
@@ -23,6 +39,9 @@ class Ec2Wrapper
         raise Aws::Errors::MissingRegionError
       end
 
+      # RubyMine gets very confused about the following 'new' call, due (I assume) to multiple 'Client' classes
+      # in the AWS SDK. So suppress the warning:
+      # noinspection RubyArgCount
       @ec2 = Aws::EC2::Client.new
 
       # Now that we've successfully initialized ec2, save the config:
@@ -54,18 +73,25 @@ class Ec2Wrapper
       c1, c2 = '', ''
       c1, c2 = "\e[1;40;33m", "\e[0m" if $stdout.isatty
 
+      # TODO: jafischer-2017-03-19 Should really remove the global_parser parameter, and do this in the calling code:
       $stderr.puts c1
-      $stderr.puts "Looks like this is the first time you've run this script."
+      $stderr.puts "It looks like this is the first time you've run this script."
       $stderr.puts 'As a one-time configuration step: please run it again, specifying the AWS region and'
-      $stderr.puts 'credentials (see below for help),'
+      $stderr.puts 'credentials (see below for help).'
+      $stderr.puts 'Note: if you have not yet created your AWS access key id and secret access key,'
+      $stderr.puts 'you can do so here: https://console.aws.amazon.com/iam/home'
       $stderr.puts c2
       global_parser.educate $stderr
       exit 1
     end
   end
 
-
-  def get_instance_info(names)
+  # Retrieves information about one or more EC2 instances.
+  #
+  # @param names [Array<String>] Optional array of names. Wildcards are supported.
+  # @return [Array<Hash>, int] Array of hashes containing pertinent information about the instances, and the
+  # width of the longest instance name (useful for formatting output).
+  def get_instance_info(names = [])
     non_wildcard_names = {}
     names.each do |name|
       non_wildcard_names[name] = true unless name.include? '*'
@@ -74,7 +100,7 @@ class Ec2Wrapper
     if names.empty?
       resp = @ec2.describe_instances
     else
-      resp = @ec2.describe_instances filters: [{ name: 'tag:Name', values: names }]
+      resp = @ec2.describe_instances filters: [{name: 'tag:Name', values: names}]
     end
 
     name_width     = 0
@@ -169,38 +195,31 @@ class Ec2Wrapper
   end
 
 
+  # Uses the Amazon EC2 price list to determine the running cost of the specified instance.
+  #
+  # @param [Hash] instance_info A single instance_info entry from the array returned by {#get_instance_info}.
+  # @return [float] Instance price.
   def get_instance_cost(instance_info)
     if @price_list.nil?
       # Get the pricing list for AmazonEC2
       # See https://aws.amazon.com/blogs/aws/new-aws-price-list-api/
 
-      # If user's copy of pricelist exists, use it. Also, if for some reason the pricelist doesn't exist in the script dir,
+      # If user's copy of price list exists, use it. Also, if for some reason the price list doesn't exist in the script dir,
       # then create and use one in the user's dir.
       # TODO: eventually, check the timestamp of the file and refresh if it's past a certain age.
-      price_list_file = "#{@aws_dir}/#{PRICE_LIST_FILE}"
+      price_list_file = "#{@aws_dir}/#{PRICE_LIST_FILE_NAME}"
 
       if !File.exists? price_list_file
         script_path = File.expand_path File.dirname(__FILE__)
         $stderr.puts 'Cached price list not found, retrieving from AWS URL... please wait.'
 
-        # On Windows, OpenSSL (used by Net::HTTP) needs to know where the certificate authorities file is:
-        # This cacert.pem file came from: https://curl.haxx.se/ca/cacert.pem
-        ENV['SSL_CERT_FILE'] = "#{script_path}/cacert.pem" if File.exists? "#{script_path}/cacert.pem"
-
-        uri                  = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
-        response             = Net::HTTP.get_response uri
+        uri      = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
+        response = Net::HTTP.get_response uri
 
         raise "Failed to get AWS price list: response code #{response.code}:\n#{response.body}" if response.code.to_i < 200 or response.code.to_i > 299
 
         File.open(price_list_file, 'w') do |f|
           f.write response.body
-        end
-
-        # This script just reduces the size of the pricelist file: No big deal if it doesn't exist or if node isn't installed.
-        begin
-          _ = `node #{script_path}/prune-aws-pricelist.js #{price_list_file}`
-        rescue Errno::ENOENT
-          # ignored
         end
 
         @price_list = JSON.parse response.body
@@ -213,7 +232,8 @@ class Ec2Wrapper
 
     @price_list['products'].each do |sku, product|
       # TODO: hard-coding US East for now; there's currently a mismatch between how regions are specified in EC2 and how
-      # they're specified in the pricelist data.
+      # they're specified in the price list data. So I can't use the --region parameter to find the appropriate section
+      # in the price list...
       if product['attributes']['location'] == 'US East (N. Virginia)' and
         product['attributes']['instanceType'] == instance_info[:type]
 
@@ -238,7 +258,11 @@ class Ec2Wrapper
   end
 
 
-  def run_instances(names, options)
+  # Uses the (confusingly-named) run_instances API to create and launch one or more instances. Also sets the 'Name' tag.
+  #
+  # @param [Array<String>] names names of the instances you want to create
+  # @param [Hash] options instance creation options: image_id (the AMI id), key_name, security_group_ids, instance_type, and subnet_id.
+  def create_instances(names, options)
     resp = @ec2.run_instances({
                                 min_count:          names.count,
                                 max_count:          names.count,
@@ -254,13 +278,14 @@ class Ec2Wrapper
       @ec2.create_tags({
                          resources: [inst.instance_id],
                          tags:      [
-                                      { key: 'Name', value: names[i] },
-                                      { key: 'login_user', value: options[:login] }
+                                      {key: 'Name', value: names[i]},
+                                      {key: 'login_user', value: options[:login]}
                                     ]
                        })
       i += 1
     end
   end
+
 
   def terminate_instances(names, options)
     instance_infos, _ = get_instance_info names
@@ -275,10 +300,11 @@ class Ec2Wrapper
     @ec2.terminate_instances(instance_ids: instance_ids)
   end
 
+
   def rename_instance(instance_id, new_name)
     @ec2.create_tags({
                        resources: [instance_id],
-                       tags:      [{ key: 'Name', value: new_name }]
+                       tags:      [{key: 'Name', value: new_name}]
                      })
   end
 end
