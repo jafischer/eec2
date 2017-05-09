@@ -7,8 +7,6 @@ require 'aws-sdk'
 require 'trollop'
 
 require 'json'
-# require 'net/http'
-# require 'uri'
 
 require 'eec2/ec2_costs'
 
