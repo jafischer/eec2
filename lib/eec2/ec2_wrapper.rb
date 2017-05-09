@@ -6,10 +6,11 @@ require 'aws-sdk'
 # See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
 
-
 require 'json'
-require 'net/http'
-require 'uri'
+# require 'net/http'
+# require 'uri'
+
+require 'eec2/ec2_costs'
 
 
 # A wrapper class for Aws::EC2, providing some useful extra functionality.
@@ -17,8 +18,6 @@ class Ec2Wrapper
   # @!attribute [r] ec2
   #   @return [Aws::EC2::Client] the EC2 client object
   attr_accessor :ec2
-
-  PRICE_LIST_FILE_NAME = 'ec2-price-list.json'
 
   # Initialize method.
   #
@@ -200,58 +199,11 @@ class Ec2Wrapper
   # @param [Hash] instance_info A single instance_info entry from the array returned by {#get_instance_info}.
   # @return [float] Instance price.
   def get_instance_cost(instance_info)
-    if @price_list.nil?
-      # Get the pricing list for AmazonEC2
-      # See https://aws.amazon.com/blogs/aws/new-aws-price-list-api/
-
-      # If user's copy of price list exists, use it. Also, if for some reason the price list doesn't exist in the script dir,
-      # then create and use one in the user's dir.
-      # TODO: eventually, check the timestamp of the file and refresh if it's past a certain age.
-      price_list_file = "#{@aws_dir}/#{PRICE_LIST_FILE_NAME}"
-
-      if !File.exists? price_list_file
-        script_path = File.expand_path File.dirname(__FILE__)
-        $stderr.puts 'Cached price list not found, retrieving from AWS URL... please wait.'
-
-        uri      = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
-        response = Net::HTTP.get_response uri
-
-        raise "Failed to get AWS price list: response code #{response.code}:\n#{response.body}" if response.code.to_i < 200 or response.code.to_i > 299
-
-        File.open(price_list_file, 'w') do |f|
-          f.write response.body
-        end
-
-        @price_list = JSON.parse response.body
-      else
-        File.open(price_list_file, 'r') do |f|
-          @price_list = JSON.parse(f.read)
-        end
-      end
-    end
-
-    @price_list['products'].each do |sku, product|
-      # TODO: hard-coding US East for now; there's currently a mismatch between how regions are specified in EC2 and how
-      # they're specified in the price list data. So I can't use the --region parameter to find the appropriate section
-      # in the price list...
-      if product['attributes']['location'] == 'US East (N. Virginia)' and
-        product['attributes']['instanceType'] == instance_info[:type]
-
-        if product['attributes']['tenancy'] == instance_info[:tenancy] or
-          (product['attributes']['tenancy'] == 'Shared' and instance_info[:tenancy] == 'default')
-          # TODO: Until I can find out how to determine whether an instance is Reserved of On-Demand, we'll use the On-Demand pricing.
-          unless @price_list['terms']['OnDemand'][sku].nil?
-            # OnDemand terms have only one entry, so just grab the first one (same for priceDimensions):
-            unit = @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['unit']
-            if unit != 'Hrs'
-              $stderr.puts "WARNING: Instance #{instance_info[:name]}'s price is measured in '#{unit}', not hours."
-              $stderr.flush
-            end
-            return @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['pricePerUnit']['USD'].to_f
-          end
-        end
-      end
-    end
+    cost = Ec2Costs.lookup(
+      # Convert availabilty zone to region name, e.g. 'us-east-1e' -> 'us-east-1'
+      instance_info[:region].sub( /[a-z]$/, ''),
+      instance_info[:type])
+    return cost unless cost.nil?
 
     $stderr.puts "WARNING: no price data found for instance type #{instance_info[:type]}"
     0.0
