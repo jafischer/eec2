@@ -12,6 +12,8 @@ require 'eec2/ec2_costs'
 
 
 # A wrapper class for Aws::EC2, providing some useful extra functionality.
+# RubyMine has real problems resolving methods inside the Aws and Aws::EC2::Client classes, so just disable the warning.
+# noinspection RubyResolve
 class Ec2Wrapper
   # @!attribute [r] ec2
   #   @return [Aws::EC2::Client] the EC2 client object
@@ -52,7 +54,7 @@ class Ec2Wrapper
           output = json
           region = #{options[:region]}
           EOS
-          f.puts contents.gsub /^  */, ''
+          f.puts contents.gsub /^ +/, ''
         end
 
         $stderr.puts "Creating #{Dir.home.gsub /\\/, '/'}/.aws/credentials"
@@ -62,7 +64,7 @@ class Ec2Wrapper
           aws_access_key_id = #{options[:key]}
           aws_secret_access_key = #{options[:secret]}
           EOS
-          f.puts contents.gsub /^  */, ''
+          f.puts contents.gsub /^ +/, ''
         end
       end
 
@@ -198,7 +200,7 @@ class Ec2Wrapper
   # @return [float] Instance price.
   def get_instance_cost(instance_info)
     cost = Ec2Costs.lookup(
-      # Convert availabilty zone to region name, e.g. 'us-east-1e' -> 'us-east-1'
+      # Convert availability zone to region name, e.g. 'us-east-1e' -> 'us-east-1'
       instance_info[:region].sub( /[a-z]$/, ''),
       instance_info[:type])
     return cost unless cost.nil?

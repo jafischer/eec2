@@ -4,7 +4,7 @@ require 'eec2/sub_command'
 class StopCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "stop -- stops the specified EC2 instance(s).\n\nCommand usage:\n\nstop INSTANCE_NAME...\n\nOptions:"
+      banner "stop -- stops the specified EC2 instance(s).\n\nCommand usage:\n\nstop [options] INSTANCE_NAME...\n\nOptions:"
 
       opt :wait, 'Wait for the instance to come to a stopped state', default: false, short: '-w'
     end
@@ -25,6 +25,7 @@ class StopCommand < SubCommand
         puts "Instance #{i[:name]} isn't running"
       end
     end
+    # noinspection RubyResolve
     @ec2_wrapper.ec2.stop_instances instance_ids: instance_ids
 
 

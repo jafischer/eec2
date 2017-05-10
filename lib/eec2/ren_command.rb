@@ -16,7 +16,7 @@ class RenCommand < SubCommand
         Options:
       EOS
 
-      banner long_banner.gsub /^        /, ''
+      banner long_banner.gsub /^ {8}/, ''
     end
 
     super(global_parser, global_options)

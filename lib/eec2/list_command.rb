@@ -8,7 +8,7 @@ class ListCommand < SubCommand
     @sub_parser = Trollop::Parser.new do
       banner "list -- lists the specified EC2 instance(s).\n\nCommand usage:\nlist [INSTANCE_NAME...]\n\nOptions:"
 
-      # TODO: jafischer-2017-03-21 Need an option to list instancess in multiple regions, different from the
+      # TODO: jafischer-2017-03-21 Need an option to list instances in multiple regions, different from the
       # global --region option (since it only makes sense for list). Or actually, maybe it would make sense... hmm.
       opt :long, 'Long format listing, with instance details', default: false, short: '-l'
       opt :state, 'List only instances with the specified state', type: String, default: nil, short: '-s'

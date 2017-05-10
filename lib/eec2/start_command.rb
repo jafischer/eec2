@@ -24,6 +24,7 @@ class StartCommand < SubCommand
         puts "Instance #{i[:name]} is already running"
       end
     end
+    # noinspection RubyResolve
     @ec2_wrapper.ec2.start_instances instance_ids: instance_ids
 
     if @sub_options[:wait]
