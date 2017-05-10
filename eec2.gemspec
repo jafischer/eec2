@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '1.0.4'
+  s.version     = '1.1.0'
   s.date        = '2017-03-11'
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
                   lib/eec2/ec2_costs.rb
                   lib/eec2/ec2_wrapper.rb
                   lib/eec2/global_command_wrapper.rb
+                  lib/eec2/ip_command.rb
                   lib/eec2/list_command.rb
                   lib/eec2/ren_command.rb
                   lib/eec2/scp_command.rb
