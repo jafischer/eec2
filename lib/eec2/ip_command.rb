@@ -7,7 +7,7 @@ class IpCommand < SubCommand
     @sub_command = sub_command
     @sub_parser  = Trollop::Parser.new do
       long_banner = <<-EOS
-        ip-add, ip-rm, ip-ls -- Commands for instance IP addresses.
+        ip-add, ip-rm, ip-ls -- Commands for instance private IP addresses.
 
         Command usage:
         ip-add [options] INSTANCE...
@@ -19,7 +19,6 @@ class IpCommand < SubCommand
 
       banner long_banner.gsub /^ {8}/, ''
 
-      opt :public, 'Perform the command on public addresses (default is private)', default: false
       opt :count, '[ip-add only] Number of addresses to add', default: 1, short: '-c'
       opt :long, '[ip-ls only] Long format listing', default: false, short: '-l'
     end
