@@ -58,7 +58,6 @@ class GlobalCommandWrapper
       opt :region, 'Specify an AWS region (e.g. us-east-2, us-west-1)', type: String, short: '-r'
       opt :key, 'AWS access key id', type: String, short: '-k'
       opt :secret, 'AWS secret access key', type: String, short: '-s'
-      opt :verbose, 'Verbose output', default: false, short: '-v'
 
       stop_on sub_command_names
     end

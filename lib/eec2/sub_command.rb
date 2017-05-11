@@ -25,8 +25,8 @@ class SubCommand
       @sub_options = @sub_parser.parse args
     end
 
-    # If -verbose, then don't wrap the call in begin; we want to see the callstack if an exception occurs.
-    if @global_options[:verbose]
+    # NOCATCH: don't wrap the call; want to see the callstack if an exception occurs.
+    if ENV['NOCATCH']
       _perform args
     else
       begin
