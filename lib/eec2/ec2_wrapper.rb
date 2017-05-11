@@ -99,7 +99,7 @@ class Ec2Wrapper
     if names.empty?
       resp = @ec2.describe_instances
     else
-      resp = @ec2.describe_instances filters: [{name: 'tag:Name', values: names}]
+      resp = @ec2.describe_instances filters: [{ name: 'tag:Name', values: names }]
     end
 
     name_width     = 0
@@ -201,7 +201,7 @@ class Ec2Wrapper
   def get_instance_cost(instance_info)
     cost = Ec2Costs.lookup(
       # Convert availability zone to region name, e.g. 'us-east-1e' -> 'us-east-1'
-      instance_info[:region].sub( /[a-z]$/, ''),
+      instance_info[:region].sub(/[a-z]$/, ''),
       instance_info[:type])
     return cost unless cost.nil?
 
@@ -230,8 +230,8 @@ class Ec2Wrapper
       @ec2.create_tags({
                          resources: [inst.instance_id],
                          tags:      [
-                                      {key: 'Name', value: names[i]},
-                                      {key: 'login_user', value: options[:login]}
+                                      { key: 'Name', value: names[i] },
+                                      { key: 'login_user', value: options[:login] }
                                     ]
                        })
       i += 1
@@ -243,7 +243,7 @@ class Ec2Wrapper
     instance_infos, _ = get_instance_info names
     instance_ids      = []
     puts 'About to terminate the following instances:'
-    instance_infos.each { |i| instance_ids.push i[:id]; puts i[:name] }
+    instance_infos.each {|i| instance_ids.push i[:id]; puts i[:name]}
     unless options[:force]
       print 'Are you sure? '
       input = $stdin.gets
@@ -256,7 +256,18 @@ class Ec2Wrapper
   def rename_instance(instance_id, new_name)
     @ec2.create_tags({
                        resources: [instance_id],
-                       tags:      [{key: 'Name', value: new_name}]
+                       tags:      [{ key: 'Name', value: new_name }]
                      })
+  end
+
+
+  def add_tag(names, tag, value)
+    instance_infos, _ = get_instance_info names
+    instance_infos.each do |i|
+      @ec2.create_tags({
+                         resources: [i[:id]],
+                         tags:      [{ key: tag, value: value }]
+                       })
+    end
   end
 end

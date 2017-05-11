@@ -12,7 +12,7 @@ require 'eec2/ssh_command'
 require 'eec2/start_command'
 require 'eec2/stop_command'
 require 'eec2/ip_command'
-
+require 'eec2/tag_command'
 
 class GlobalCommandWrapper
   def initialize(args)
@@ -23,17 +23,18 @@ class GlobalCommandWrapper
 
     # noinspection RubyStringKeysInHashInspection
     @sub_commands     = {
-      'create' => lambda { |global_parser, global_options| CreateCommand.new(global_parser, global_options) },
-      'delete' => lambda { |global_parser, global_options| DeleteCommand.new(global_parser, global_options) },
-      'ls'     => lambda { |global_parser, global_options| ListCommand.new(global_parser, global_options) },
-      'ren'    => lambda { |global_parser, global_options| RenCommand.new(global_parser, global_options) },
-      'scp'    => lambda { |global_parser, global_options| ScpCommand.new(global_parser, global_options) },
-      'ssh'    => lambda { |global_parser, global_options| SshCommand.new(global_parser, global_options) },
-      'start'  => lambda { |global_parser, global_options| StartCommand.new(global_parser, global_options) },
-      'stop'   => lambda { |global_parser, global_options| StopCommand.new(global_parser, global_options) },
-      'ip-add' => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'add') },
-      'ip-rm'  => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'rm') },
-      'ip-ls'  => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'ls') },
+      'create' => lambda {|global_parser, global_options| CreateCommand.new(global_parser, global_options)},
+      'delete' => lambda {|global_parser, global_options| DeleteCommand.new(global_parser, global_options)},
+      'ls'     => lambda {|global_parser, global_options| ListCommand.new(global_parser, global_options)},
+      'ren'    => lambda {|global_parser, global_options| RenCommand.new(global_parser, global_options)},
+      'scp'    => lambda {|global_parser, global_options| ScpCommand.new(global_parser, global_options)},
+      'ssh'    => lambda {|global_parser, global_options| SshCommand.new(global_parser, global_options)},
+      'start'  => lambda {|global_parser, global_options| StartCommand.new(global_parser, global_options)},
+      'stop'   => lambda {|global_parser, global_options| StopCommand.new(global_parser, global_options)},
+      'ip-add' => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'add')},
+      'ip-rm'  => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'rm')},
+      'ip-ls'  => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'ls')},
+      'tag'    => lambda {|global_parser, global_options| TagCommand.new(global_parser, global_options)},
     }
 
     # Directly placing #{@sub_commands.keys} in the string doesn't work, because (I think) @xxx is scoped to

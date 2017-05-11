@@ -12,8 +12,6 @@ class RenCommand < SubCommand
         ren OLD_NAME NEW_NAME
         Note: supports wildcards in names, but only as the last character, e.g. 'ren some-prefix-* new-prefix-*'
         NEW_NAME can also be empty (useful for clearing names of instances you've terminated). 
-
-        Options:
       EOS
 
       banner long_banner.gsub /^ {8}/, ''
