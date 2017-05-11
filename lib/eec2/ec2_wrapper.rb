@@ -108,19 +108,20 @@ class Ec2Wrapper
     resp.reservations.each do |reservation|
       reservation.instances.each do |instance|
         instance_info = {
-          name:        '<unnamed>',
-          id:          instance.instance_id,
-          state:       instance.state.name,
-          state_code:  instance.state.code,
-          launch_time: instance.launch_time,
-          public_ip:   instance.public_ip_address.nil? ? '<n/a>' : instance.public_ip_address,
-          private_ip:  instance.private_ip_address.nil? ? '<n/a>' : instance.private_ip_address,
-          login_user:  'ec2-user',
-          type:        instance.instance_type,
-          region:      instance.placement.availability_zone,
-          tenancy:     instance.placement.tenancy,
-          key:         instance.key_name,
-          key_path:    "#{Dir.home}/.ssh/#{instance.key_name}.pem"
+          name:           '<unnamed>',
+          id:             instance.instance_id,
+          state:          instance.state.name,
+          state_code:     instance.state.code,
+          launch_time:    instance.launch_time,
+          public_ip:      instance.public_ip_address.nil? ? '<n/a>' : instance.public_ip_address,
+          private_ip:     instance.private_ip_address.nil? ? '<n/a>' : instance.private_ip_address,
+          login_user:     'ec2-user',
+          type:           instance.instance_type,
+          region:         instance.placement.availability_zone,
+          tenancy:        instance.placement.tenancy,
+          key:            instance.key_name,
+          key_path:       "#{Dir.home}/.ssh/#{instance.key_name}.pem",
+          net_interfaces: instance.network_interfaces,
         }
         instance.tags.each do |tag|
           if tag.key == 'Name' and !tag.value.empty?
