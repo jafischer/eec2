@@ -107,11 +107,10 @@ class IpCommand < SubCommand
           else
             # For short-form, just print the ip addresses, nothing else, so that the output can be used directly in
             # other scripts.
-            print "#{addr.private_ip_address} "
+            puts addr.private_ip_address
           end
         end
       end
-      puts '' unless @sub_options[:long]
     end
   end
 end

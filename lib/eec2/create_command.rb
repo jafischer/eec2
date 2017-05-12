@@ -5,12 +5,12 @@ class CreateCommand < SubCommand
     @sub_parser = Trollop::Parser.new do
       banner "create -- Creates EC2 instance(s).\n\nCommand usage:\n\ncreate INSTANCE_NAME1 ...\n\nOptions:"
 
-      opt :image, 'AMI id', type: String, required: true
-      opt :type, 'Instance type', type: String, required: true
-      opt :key, 'Key name', type: String, required: true
-      opt :sg, 'Security group', type: String, required: true
-      opt :subnet, 'VPC Subnet ID', type: String, required: true
-      opt :login, 'Name of login account for ssh', type: String, default: 'ec2-user'
+      opt :image, 'AMI id', type: String, required: true, short: '-i'
+      opt :type, 'Instance type', type: String, required: true, short: '-t'
+      opt :key, 'Key name', type: String, required: true, short: '-k'
+      opt :sg, 'Security group', type: String, required: true, short: '-g'
+      opt :subnet, 'VPC Subnet ID', type: String, required: true, short: '-s'
+      opt :login, 'Name of login account for ssh', type: String, default: 'ec2-user', short: '-l'
     end
 
     super(global_parser, global_options)
