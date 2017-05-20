@@ -4,17 +4,17 @@ require 'trollop'
 
 # Our modules:
 require 'eec2/string_colorize'
-require 'eec2/config_command'
-require 'eec2/create_command'
-require 'eec2/delete_command'
-require 'eec2/list_command'
-require 'eec2/ren_command'
-require 'eec2/scp_command'
-require 'eec2/ssh_command'
-require 'eec2/start_command'
-require 'eec2/stop_command'
-require 'eec2/ip_command'
-require 'eec2/tag_command'
+require 'eec2/commands/config_command'
+require 'eec2/commands/create_command'
+require 'eec2/commands/delete_command'
+require 'eec2/commands/list_command'
+require 'eec2/commands/ren_command'
+require 'eec2/commands/scp_command'
+require 'eec2/commands/ssh_command'
+require 'eec2/commands/start_command'
+require 'eec2/commands/stop_command'
+require 'eec2/commands/ip_command'
+require 'eec2/commands/tag_command'
 
 
 class GlobalCommandWrapper
@@ -48,8 +48,8 @@ class GlobalCommandWrapper
 
         Usage: eec2 [global options] COMMAND [command options] [command arguments]
         Valid commands:
-            #{sub_command_names.join ' '}
-            Note: Help for each command can be displayed by specifying 'help COMMAND' or COMMAND -h
+            #{sub_command_names.sort.join "\n    "}
+        Note: Help for each command can be displayed by specifying 'help COMMAND' or 'COMMAND -h'
 
         Global options:
       EOS
@@ -76,6 +76,12 @@ class GlobalCommandWrapper
     global_usage "No command specified.\n" if @args.count < 1
 
     command = @args.shift
+
+    if command == 'help'
+      global_usage "Help: no command specified.\n" if @args.count < 1
+      command = @args.shift
+      @args = ['--help']
+    end
 
     # Is there a handler for this command?
     global_usage "Unknown command #{command}.\n\n" unless @sub_commands.include? command

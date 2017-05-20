@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '1.3.0'
+  s.version     = '1.4.0'
   s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
@@ -9,22 +9,22 @@ Gem::Specification.new do |s|
   s.files       = %w[
                   bin/eec2
                   lib/eec2.rb
-                  lib/eec2/config_command.rb
-                  lib/eec2/create_command.rb
-                  lib/eec2/delete_command.rb
                   lib/eec2/ec2_costs.rb
                   lib/eec2/ec2_wrapper.rb
-                  lib/eec2/global_command_wrapper.rb
-                  lib/eec2/ip_command.rb
-                  lib/eec2/list_command.rb
-                  lib/eec2/ren_command.rb
-                  lib/eec2/scp_command.rb
-                  lib/eec2/ssh_command.rb
-                  lib/eec2/start_command.rb
-                  lib/eec2/stop_command.rb
                   lib/eec2/string_colorize.rb
+                  lib/eec2/global_command_wrapper.rb
                   lib/eec2/sub_command.rb
-                  lib/eec2/tag_command.rb
+                  lib/eec2/commands/config_command.rb
+                  lib/eec2/commands/create_command.rb
+                  lib/eec2/commands/delete_command.rb
+                  lib/eec2/commands/ip_command.rb
+                  lib/eec2/commands/list_command.rb
+                  lib/eec2/commands/ren_command.rb
+                  lib/eec2/commands/scp_command.rb
+                  lib/eec2/commands/ssh_command.rb
+                  lib/eec2/commands/start_command.rb
+                  lib/eec2/commands/stop_command.rb
+                  lib/eec2/commands/tag_command.rb
                   ]
   s.executables << 'eec2'
   s.homepage = 'https://github.com/jafischer/eec2'
