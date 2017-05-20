@@ -29,13 +29,6 @@ class ScpCommand < SubCommand
 
     instance_map = {}
     key_file     = nil
-    if $stdout.isatty
-      color_start = "\e[1;32m"
-      color_end   = "\e[0m"
-    else
-      color_start = ''
-      color_end   = ''
-    end
 
     args.each do |arg|
       # First, convert any backslashes to forward slashes.
@@ -96,7 +89,7 @@ class ScpCommand < SubCommand
         end
       end
 
-      puts "#{color_start}Executing scp with these file args:#{color_end} #{@sub_options[:recurse] ? '-r' : ''} #{source_args.join ' '} #{target_arg}"
+      puts 'Executing scp with these file args:'.green.bold + " #{@sub_options[:recurse] ? '-r' : ''} #{source_args.join ' '} #{target_arg}"
 
       system "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -q -i #{key_file} -p #{@sub_options[:recurse] ? '-r' : ''} #{source_args.join ' '} #{target_arg}"
     end

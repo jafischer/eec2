@@ -86,14 +86,10 @@ class IpCommand < SubCommand
     name_width = [name_width, 'Instance '.length].max
 
     if !instance_infos.empty? and @sub_options[:long]
-      c1, c2 = '', ''
-      c1, c2 = "\e[1;42;33m", "\e[0m" if $stdout.isatty
-      puts c1 +
-             'Instance'.ljust(name_width + 1) +
+      puts ('Instance'.ljust(name_width + 1) +
              'Iface'.ljust(16) +
              'Address'.ljust(17) +
-             'Type'.ljust(12) +
-             c2
+             'Type'.ljust(12)).bg_green.brown.bold
     end
 
     instance_infos.each do |i|

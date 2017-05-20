@@ -1,11 +1,9 @@
 # AWS SDK: see http://docs.aws.amazon.com/sdkforruby/api/index.html
 # And http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html specifically for the EC2 client.
 require 'aws-sdk'
-
 # Trollop: a command-line argument parser that I prefer over 'optparse'.
 # See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
-
 require 'json'
 
 require 'eec2/ec2_costs'
@@ -23,66 +21,15 @@ class Ec2Wrapper
   #
   # @param [Trollop::Parser] global_parser
   # @param [Hash] options Contains optional :region, :key, and :secret.
-  def initialize(global_parser, options)
+  def initialize(options)
     Aws.use_bundled_cert!
 
-    aws_options               = {}
-    aws_options[:region]      = options[:region] unless options[:region].nil?
-    aws_options[:credentials] = Aws::Credentials.new(options[:key], options[:secret]) unless options[:key].nil?
-    Aws.config.update aws_options unless aws_options.empty?
+    Aws.config.update(region: options[:region]) unless options[:region].nil?
 
-    begin
-      @aws_dir = "#{Dir.home}/.aws"
-
-      if !File.exists? "#{@aws_dir}/config" and (options[:region].nil? or options[:key].nil? or options[:secret].nil?)
-        raise Aws::Errors::MissingRegionError
-      end
-
-      # RubyMine gets very confused about the following 'new' call, due (I assume) to multiple 'Client' classes
-      # in the AWS SDK. So suppress the warning:
-      # noinspection RubyArgCount
-      @ec2 = Aws::EC2::Client.new
-
-      # Now that we've successfully initialized ec2, save the config:
-      unless File.exists? "#{@aws_dir}/config"
-        Dir.mkdir "#{@aws_dir}" unless Dir.exists? "#{@aws_dir}"
-
-        $stderr.puts "Creating #{Dir.home.gsub /\\/, '/'}/.aws/config"
-        File.open("#{@aws_dir}/config", 'w') do |f|
-          contents = <<-EOS
-          [default]
-          output = json
-          region = #{options[:region]}
-          EOS
-          f.puts contents.gsub /^ +/, ''
-        end
-
-        $stderr.puts "Creating #{Dir.home.gsub /\\/, '/'}/.aws/credentials"
-        File.open("#{@aws_dir}/credentials", 'w') do |f|
-          contents = <<-EOS
-          [default]
-          aws_access_key_id = #{options[:key]}
-          aws_secret_access_key = #{options[:secret]}
-          EOS
-          f.puts contents.gsub /^ +/, ''
-        end
-      end
-
-    rescue Aws::Errors::MissingRegionError, Aws::Errors::MissingCredentialsError
-      c1, c2 = '', ''
-      c1, c2 = "\e[1;40;33m", "\e[0m" if $stdout.isatty
-
-      # TODO: jafischer-2017-03-19 Should really remove the global_parser parameter, and do this in the calling code:
-      $stderr.puts c1
-      $stderr.puts "It looks like this is the first time you've run this script."
-      $stderr.puts 'As a one-time configuration step: please run it again, specifying the AWS region and'
-      $stderr.puts 'credentials (see below for help).'
-      $stderr.puts 'Note: if you have not yet created your AWS access key id and secret access key,'
-      $stderr.puts 'you can do so here: https://console.aws.amazon.com/iam/home'
-      $stderr.puts c2
-      global_parser.educate $stderr
-      exit 1
-    end
+    # RubyMine gets very confused about the following 'new' call, due (I assume) to multiple 'Client' classes
+    # in the AWS SDK. So suppress the warning:
+    # noinspection RubyArgCount
+    @ec2 = Aws::EC2::Client.new
   end
 
   # Retrieves information about one or more EC2 instances.
@@ -96,11 +43,11 @@ class Ec2Wrapper
       non_wildcard_names[name] = true unless name.include? '*'
     end
 
-    if names.empty?
-      resp = @ec2.describe_instances
-    else
-      resp = @ec2.describe_instances filters: [{ name: 'tag:Name', values: names }]
-    end
+    resp = if names.empty?
+             @ec2.describe_instances
+           else
+             @ec2.describe_instances(filters: [{ name: 'tag:Name', values: names }])
+           end
 
     name_width     = 0
     instance_infos = []
@@ -133,42 +80,22 @@ class Ec2Wrapper
 
         degraded = (instance_info[:state_code] & 256) != 0
 
-        if $stdout.isatty
-          # red=31 green=32 yellow=33 blue=34 pink=35 cyan=36 grey=37 black=38
-          case instance_info[:state_code] & ~256
-            # 0 (pending)
-            when 0
-              bold, bg, fg = 1, degraded ? 41 : 40, 33
-            # 16 (running)
-            when 16
-              bold, bg, fg = 1, degraded ? 41 : 40, 32
-            # 32 (shutting-down)
-            when 32
-              bold, bg, fg = 0, 47, 31
-            # 48 (terminated)
-            when 48
-              bold, bg, fg = 0, 47, 30
-            # 64 (stopping)
-            when 64
-              bold, bg, fg = 0, 40, 31
-            # 80 (stopped).
-            when 80
-              bold, bg, fg = 1, 40, 31
-            else
-              bold, bg, fg = 0, degraded ? 41 : 40, 35
-          end
-
-          instance_info[:color_start] = "\e[#{bold};#{bg};#{fg}m"
-          instance_info[:color_end]   = "\e[0m"
-        else
-          instance_info[:color_start] = ''
-          instance_info[:color_end]   = ''
+        case instance_info[:state_code] & ~256
+          when 0 # pending
+            instance_info[:colorized_state] = degraded ? (instance_info[:state] + '*').bg_red.bold.brown : instance_info[:state].bold.brown
+          when 16 # running
+            instance_info[:colorized_state] = degraded ? (instance_info[:state] + '*').bg_red.bold.green : instance_info[:state].bold.green
+          when 32 # shutting-down
+            instance_info[:colorized_state] = instance_info[:state].bg_gray.red
+          when 48 # terminated
+            instance_info[:colorized_state] = instance_info[:state].bg_gray.black
+          when 64 # stopping
+            instance_info[:colorized_state] = instance_info[:state].red
+          when 80 # stopped
+            instance_info[:colorized_state] = instance_info[:state].bold.red
+          else # unknown
+            instance_info[:colorized_state] = degraded ? (instance_info[:state] + '*').bg_red.magenta : instance_info[:state].magenta
         end
-
-        instance_info[:colorized_state] = ("#{instance_info[:color_start]}" +
-          "#{instance_info[:state]}" +
-          "#{degraded ? '*' : ''}" +
-          "#{instance_info[:color_end]}").ljust(11 + instance_info[:color_start].length + instance_info[:color_end].length)
 
         name_width = [name_width, instance_info[:name].length].max
 
@@ -244,7 +171,7 @@ class Ec2Wrapper
     instance_infos, _ = get_instance_info names
     instance_ids      = []
     puts 'About to terminate the following instances:'
-    instance_infos.each {|i| instance_ids.push i[:id]; puts i[:name]}
+    instance_infos.each { |i| instance_ids.push i[:id]; puts i[:name] }
     unless options[:force]
       print 'Are you sure? '
       input = $stdin.gets
@@ -270,5 +197,24 @@ class Ec2Wrapper
                          tags:      [{ key: tag, value: value }]
                        })
     end
+  end
+
+  def regions
+    %w[
+      ap-northeast-1
+      ap-northeast-2
+      ap-south-1
+      ap-southeast-1
+      ap-southeast-2
+      ca-central-1
+      eu-central-1
+      eu-west-1
+      eu-west-2
+      sa-east-1
+      us-east-1
+      us-east-2
+      us-west-1
+      us-west-2
+    ]
   end
 end

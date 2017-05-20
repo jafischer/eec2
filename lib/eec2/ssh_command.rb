@@ -29,9 +29,9 @@ class SshCommand < SubCommand
         raise "Can't find key file #{i[:key_path]}" unless File.exists? i[:key_path]
       end
       if command_line.nil?
-        $stderr.puts "#{@GREEN}Connecting to #{i[:name]} as #{i[:login_user]}@#{i[:public_ip]}#{@NC}"
+        $stderr.puts "Connecting to #{i[:name]} as #{i[:login_user]}@#{i[:public_ip]}".green.bold
       else
-        $stderr.puts "#{@GREEN}#{i[:name].ljust(name_width)} #{i[:login_user]}@#{i[:public_ip]}, command: #{@NC}#{command_line}"
+        $stderr.puts "#{i[:name].ljust(name_width)} #{i[:login_user]}@#{i[:public_ip]}, command: ".green.bold + command_line
       end
 
       if i[:state] == 'running'

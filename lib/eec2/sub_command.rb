@@ -13,11 +13,7 @@ class SubCommand
     # I like to get files to a warning-free state when I can, even if that sometimes involves trickery like this...
     @sub_parser     = @sub_parser
 
-    @ec2_wrapper    = Ec2Wrapper.new(global_parser, global_options)
-
-    @RED = $stdout.isatty ? "\e[1;40;31m" : ''
-    @GREEN = $stdout.isatty ? "\e[1;40;32m" : ''
-    @NC = $stdout.isatty ? "\e[0m" : ''
+    @ec2_wrapper    = Ec2Wrapper.new(global_options)
   end
 
   def perform(args)
@@ -25,14 +21,14 @@ class SubCommand
       @sub_options = @sub_parser.parse args
     end
 
-    # NOCATCH: don't wrap the call; want to see the callstack if an exception occurs.
-    if ENV['NOCATCH']
+    # NO_CATCH: don't wrap the call; want to see the callstack if an exception occurs.
+    if ENV['NO_CATCH']
       _perform args
     else
       begin
         _perform args
       rescue => ex
-        $stderr.puts "#{@RED}ERROR: #{ex}#{@NC}"
+        $stderr.puts "ERROR: #{ex}".red.bold
         exit 1
       end
     end
@@ -43,9 +39,9 @@ class SubCommand
   end
 
   def sub_cmd_usage(message)
-    $stderr.puts "#{@RED}#{message}#{@NC}\n\n"
-    @global_parser.educate $stderr
-    $stderr.puts "\n"
+    $stderr.puts "#{message}\n\n".red.bold
+    # @global_parser.educate $stderr
+    # $stderr.puts "\n"
     @sub_parser.educate $stderr
     exit 1
   end

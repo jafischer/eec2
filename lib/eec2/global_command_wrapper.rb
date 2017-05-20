@@ -3,6 +3,8 @@
 require 'trollop'
 
 # Our modules:
+require 'eec2/string_colorize'
+require 'eec2/config_command'
 require 'eec2/create_command'
 require 'eec2/delete_command'
 require 'eec2/list_command'
@@ -14,27 +16,26 @@ require 'eec2/stop_command'
 require 'eec2/ip_command'
 require 'eec2/tag_command'
 
+
 class GlobalCommandWrapper
   def initialize(args)
     @args             = args
-    @RED              = $stdout.isatty ? "\e[1;40;31m" : ''
-    @GREEN            = $stdout.isatty ? "\e[1;40;32m" : ''
-    @NC               = $stdout.isatty ? "\e[0m" : ''
 
     # noinspection RubyStringKeysInHashInspection
     @sub_commands     = {
-      'create' => lambda {|global_parser, global_options| CreateCommand.new(global_parser, global_options)},
-      'delete' => lambda {|global_parser, global_options| DeleteCommand.new(global_parser, global_options)},
-      'ls'     => lambda {|global_parser, global_options| ListCommand.new(global_parser, global_options)},
-      'ren'    => lambda {|global_parser, global_options| RenCommand.new(global_parser, global_options)},
-      'scp'    => lambda {|global_parser, global_options| ScpCommand.new(global_parser, global_options)},
-      'ssh'    => lambda {|global_parser, global_options| SshCommand.new(global_parser, global_options)},
-      'start'  => lambda {|global_parser, global_options| StartCommand.new(global_parser, global_options)},
-      'stop'   => lambda {|global_parser, global_options| StopCommand.new(global_parser, global_options)},
-      'ip-add' => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'add')},
-      'ip-rm'  => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'rm')},
-      'ip-ls'  => lambda {|global_parser, global_options| IpCommand.new(global_parser, global_options, 'ls')},
-      'tag'    => lambda {|global_parser, global_options| TagCommand.new(global_parser, global_options)},
+      'create' => lambda { |global_parser, global_options| CreateCommand.new(global_parser, global_options) },
+      'config' => lambda { |global_parser, global_options| ConfigCommand.new(global_parser, global_options) },
+      'delete' => lambda { |global_parser, global_options| DeleteCommand.new(global_parser, global_options) },
+      'ls'     => lambda { |global_parser, global_options| ListCommand.new(global_parser, global_options) },
+      'ren'    => lambda { |global_parser, global_options| RenCommand.new(global_parser, global_options) },
+      'scp'    => lambda { |global_parser, global_options| ScpCommand.new(global_parser, global_options) },
+      'ssh'    => lambda { |global_parser, global_options| SshCommand.new(global_parser, global_options) },
+      'start'  => lambda { |global_parser, global_options| StartCommand.new(global_parser, global_options) },
+      'stop'   => lambda { |global_parser, global_options| StopCommand.new(global_parser, global_options) },
+      'ip-add' => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'add') },
+      'ip-rm'  => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'rm') },
+      'ip-ls'  => lambda { |global_parser, global_options| IpCommand.new(global_parser, global_options, 'ls') },
+      'tag'    => lambda { |global_parser, global_options| TagCommand.new(global_parser, global_options) },
     }
 
     # Directly placing #{@sub_commands.keys} in the string doesn't work, because (I think) @xxx is scoped to
@@ -45,19 +46,17 @@ class GlobalCommandWrapper
       long_banner = <<-EOS
         eec2 -- Enhanced EC2 commands.
 
-        Usage: #{File.basename __FILE__} [global options] COMMAND [command options] [COMMAND ARGUMENTS]
+        Usage: eec2 [global options] COMMAND [command options] [command arguments]
         Valid commands:
             #{sub_command_names.join ' '}
+            Note: Help for each command can be displayed by specifying 'help COMMAND' or COMMAND -h
 
-        Note: Help for each command can be displayed by entering -h after the command name.
         Global options:
       EOS
 
-      banner long_banner.gsub /^ {8}/, ''
+      banner long_banner.gsub(/^ {8}/, '')
 
-      opt :region, 'Specify an AWS region (e.g. us-east-2, us-west-1)', type: String, short: '-r'
-      opt :key, 'AWS access key id', type: String, short: '-k'
-      opt :secret, 'AWS secret access key', type: String, short: '-s'
+      opt :region, 'Override the currently configured region', type: String, short: '-r'
 
       stop_on sub_command_names
     end
@@ -65,25 +64,39 @@ class GlobalCommandWrapper
     @global_options = Trollop::with_standard_exception_handling @global_parser do
       @global_parser.parse @args
     end
-
-    global_usage "ERROR: Both --key and --secret must be specified together.\n\n" if @global_options[:key].nil? != @global_options[:secret].nil?
   end
 
   def global_usage(message)
-    $stderr.puts "#{@RED}#{message}#{@NC}"
+    $stderr.puts message.red.bold
     @global_parser.educate $stderr
     exit 1
   end
 
   def run_command
-    global_usage "No command specified.\n\n" if @args.count < 1
+    global_usage "No command specified.\n" if @args.count < 1
 
     command = @args.shift
 
     # Is there a handler for this command?
     global_usage "Unknown command #{command}.\n\n" unless @sub_commands.include? command
 
-    sub_command = @sub_commands[command].call @global_parser, @global_options
+    begin
+      sub_command = @sub_commands[command].call @global_parser, @global_options
+
+    rescue Aws::Errors::MissingRegionError, Aws::Errors::MissingCredentialsError
+      message = <<-EOS
+        It looks like this is the first time you've run this script.
+        As a one-time configuration step, please use the 'config' command to setup eec2.
+        (see below for help).
+
+        Note: if you have not yet created your AWS access key id and secret access key,
+        you can do so here: https://console.aws.amazon.com/iam/home
+
+      EOS
+      $stderr.puts message.brown
+      @global_parser.educate $stderr
+      exit 1
+    end
 
     sub_command.perform @args
   end
