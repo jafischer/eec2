@@ -55,6 +55,7 @@ class GlobalCommandWrapper
       EOS
 
       banner long_banner.gsub(/^ {8}/, '')
+      version `gem list --local eec2 | grep eec2`
 
       opt :region, 'Override the currently configured region', type: String, short: '-r'
 
