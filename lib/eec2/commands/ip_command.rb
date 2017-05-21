@@ -7,14 +7,13 @@ class IpCommand < SubCommand
     @sub_command = sub_command
     @sub_parser  = Trollop::Parser.new do
       long_banner = <<-EOS
-        ip-add, ip-rm, ip-ls -- Commands for instance private IP addresses.
+        ip-add, ip-rm, ip-ls -- Configure private IP addresses
 
         Command usage:
-        ip-add [options] INSTANCE...
-        ip-rm [options] INSTANCE ADDRESS...
-        ip-ls [options] INSTANCE...
+        #{'ip-add [options] INSTANCE...'.green}
+        #{'ip-rm [options] INSTANCE ADDRESS...'.green}
+        #{'ip-ls [options] INSTANCE...'.green}
 
-        Options:
       EOS
 
       banner long_banner.gsub /^ {8}/, ''

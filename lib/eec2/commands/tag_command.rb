@@ -5,13 +5,10 @@ class TagCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
       long_banner = <<-EOS
-        tag -- Adds tags to the specified EC2 instance(s).
+        tag -- Adds tags to the specified EC2 instance(s)
 
-        Command usage:
+        Command usage: #{'tag INSTANCE... --tag TAG [--value VALUE]'.green}
 
-        tag INSTANCE... --tag TAG [--value VALUE]
-
-        Options:
       EOS
 
       banner long_banner.gsub /^ {8}/, ''

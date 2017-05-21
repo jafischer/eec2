@@ -4,9 +4,15 @@ require 'eec2/sub_command'
 class DeleteCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "delete -- Deletes (terminates) EC2 instance(s). Obviously, USE WITH CAUTION.\n\nCommand usage:\n\ndelete INSTANCE_NAME1 ...\n\nOptions:"
+      long_banner = <<-EOS
+        delete -- Delete (terminate) EC2 instance(s)
 
-      opt :force, 'Force deletion, do not prompt.', default: false, short: '-f'
+        Command usage: #{'delete [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
+
+      opt :force, "Force deletion, do not prompt. It goes without saying, #{'USE WITH CAUTION'.red.bold}.", default: false, short: '-f'
     end
 
     super(global_parser, global_options)

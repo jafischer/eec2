@@ -4,7 +4,14 @@ require 'eec2/sub_command'
 class StartCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "start -- starts the specified EC2 instance(s).\n\nCommand usage:\n\nstart [options] INSTANCE_NAME...\n\nOptions:"
+      long_banner = <<-EOS
+        start -- start the specified EC2 instance(s)
+
+        Command usage: #{'start [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
+
       opt :wait, 'Wait for the instance to come to a running state', default: true, short: '-w'
     end
 

@@ -4,10 +4,17 @@ require 'eec2/sub_command'
 class SshCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "ssh -- ssh to the specified EC2 instance(s) and optionally run a command.\n\nCommand usage:\n\nssh [options] INSTANCE_NAME...\n\nOptions:"
+      long_banner = <<-EOS
+        ssh -- login to the specified EC2 instance(s) and optionally run a command
+
+        Command usage: #{'ssh [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
 
       opt :command, 'Rather than starting an ssh session, execute the specified command on the instance(s).', type: String, short: '-c'
-      opt :log, 'Save output of command to [instance-name].log', default: false, short: '-l'
+      # TODO: implement --log
+      # opt :log, 'Save output of command to [instance-name].log', default: false, short: '-l'
       opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false, short: '-i'
     end
 

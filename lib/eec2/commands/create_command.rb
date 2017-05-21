@@ -3,7 +3,13 @@ require 'eec2/sub_command'
 class CreateCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "create -- Creates EC2 instance(s).\n\nCommand usage:\n\ncreate INSTANCE_NAME1 ...\n\nOptions:"
+      long_banner = <<-EOS
+        create -- Create (AKA 'launch') EC2 instance(s)
+
+        Command usage: #{'create [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
 
       opt :image, 'AMI id', type: String, required: true, short: '-i'
       opt :type, 'Instance type', type: String, required: true, short: '-t'

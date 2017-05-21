@@ -6,7 +6,13 @@ class ListCommand < SubCommand
 
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "list -- lists the specified EC2 instance(s).\n\nCommand usage:\nlist [INSTANCE_NAME...]\n\nOptions:"
+      long_banner = <<-EOS
+        list -- list the specified EC2 instance(s)
+
+        Command usage: #{'list [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
 
       # TODO: jafischer-2017-03-21 Need an option to list instances in multiple regions, different from the
       # global --region option (since it only makes sense for list). Or actually, maybe it would make sense... hmm.

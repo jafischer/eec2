@@ -6,12 +6,9 @@ class ConfigCommand < SubCommand
     @aws_dir    = "#{Dir.home}/.aws"
     @sub_parser = Trollop::Parser.new do
       long_banner = <<-EOS
-        config -- Set your AWS config files.
+        config -- Set your AWS credentials and/or region
 
-        Command usage:
-        config [OPTIONS]
-
-        Options:
+        Command usage: #{'config [options]'.green}
       EOS
 
       banner long_banner.gsub(/^ {8}/, '')

@@ -48,7 +48,7 @@ class GlobalCommandWrapper
 
         Usage: eec2 [global options] COMMAND [command options] [command arguments]
         Valid commands:
-            #{sub_command_names.sort.join "\n    "}
+            #{sub_command_names.sort.join("\n    ").green}
         Note: Help for each command can be displayed by specifying 'help COMMAND' or 'COMMAND -h'
 
         Global options:

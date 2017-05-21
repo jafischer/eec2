@@ -5,13 +5,12 @@ class RenCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
       long_banner = <<-EOS
-        ren -- Renames the specified EC2 instance(s).
+        ren -- Renames the specified EC2 instance(s)
 
-        Command usage:
-
-        ren OLD_NAME NEW_NAME
+        Command usage: #{'ren OLD_NAME [NEW_NAME]'.green}
         Note: supports wildcards in names, but only as the last character, e.g. 'ren some-prefix-* new-prefix-*'
-        NEW_NAME can also be empty (useful for clearing names of instances you've terminated). 
+        NEW_NAME can also be omitted (useful for clearing names of instances you've terminated). 
+
       EOS
 
       banner long_banner.gsub /^ {8}/, ''

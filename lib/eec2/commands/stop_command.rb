@@ -4,7 +4,13 @@ require 'eec2/sub_command'
 class StopCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
-      banner "stop -- stops the specified EC2 instance(s).\n\nCommand usage:\n\nstop [options] INSTANCE_NAME...\n\nOptions:"
+      long_banner = <<-EOS
+        stop -- stop the specified EC2 instance(s)
+
+        Command usage: #{'stop [options] INSTANCE_NAME...'.green}
+      EOS
+
+      banner long_banner.gsub(/^ {8}/, '')
 
       opt :wait, 'Wait for the instance to come to a stopped state', default: false, short: '-w'
     end

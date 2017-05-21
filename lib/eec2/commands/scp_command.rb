@@ -7,12 +7,9 @@ class ScpCommand < SubCommand
       long_banner = <<-EOS
         scp -- Behaves like normal scp, but using instance names instead of user@ip_address.
 
-        Command usage:
-
-        scp [options] [INSTANCE_NAME:]file ... [INSTANCE_NAME:]file
+        Command usage: #{'scp [options] [INSTANCE_NAME:]file ... [INSTANCE_NAME:]file'.green}
         Note: wildcard is allowed when the last argument includes the instance name.
 
-        Options:
       EOS
 
       banner long_banner.gsub /^ +/, ''
