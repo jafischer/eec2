@@ -4,7 +4,7 @@
 This gem provides a number of command line tools that greatly simplify working with
 Amazon EC2 instances. 
 
-Why use eec2, when there is already the AWS CLI? 
+Why use eec2, when there's already an AWS CLI? 
 The key aim of eec2 is **convenience**, especially for the common set of operations that I found myself doing in my own work.
 
 All eec2 commands operate on **instance names**, rather than IDs.
@@ -22,6 +22,14 @@ eec2 create [options omitted for brevity] loadtest-{1..16}
 eec2 scp somefile anotherfile *.sh *.yml loadtest-\*:
 eec2 ssh loadtest-\* -c './start-loadtest.sh'
 ```
+
+Eec2 has a convenient 'ls' command: `eec2 ls -l`
+
+![Sample output](https://s3.amazonaws.com/1ab947ef/eec2-screen1.png)
+
+With even more detail: `eec2 ls -L`
+
+![Sample output](https://s3.amazonaws.com/1ab947ef/eec2-screen2.png)
 
 ### Commands
 Here are brief descriptions of each command. For full details, use `eec2 help COMMAND` to see each command's details.
