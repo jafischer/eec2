@@ -15,6 +15,6 @@ class DeleteCommand < SubCommand
   def _perform(args)
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
 
-    @ec2_wrapper.terminate_instances args, @sub_options
+    ec2_wrapper.terminate_instances args, @sub_options
   end
 end

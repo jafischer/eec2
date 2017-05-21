@@ -14,7 +14,7 @@ class StartCommand < SubCommand
   def _perform(args)
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
 
-    instance_infos, _ = @ec2_wrapper.get_instance_info args
+    instance_infos, _ = ec2_wrapper.get_instance_info args
     instance_ids      = []
     instance_infos.each do |i|
       if i[:state] != 'running'
@@ -25,7 +25,7 @@ class StartCommand < SubCommand
       end
     end
     # noinspection RubyResolve
-    @ec2_wrapper.ec2.start_instances instance_ids: instance_ids
+    ec2_wrapper.ec2.start_instances instance_ids: instance_ids
 
     if @sub_options[:wait]
       all_online = false
@@ -33,7 +33,7 @@ class StartCommand < SubCommand
       puts "Waiting for instance#{args.count > 1 ? 's' : ''} to finish starting..."
       until all_online
         all_online                 = true
-        instance_infos, name_width = @ec2_wrapper.get_instance_info args
+        instance_infos, name_width = ec2_wrapper.get_instance_info args
         instance_infos.each do |i|
           puts "#{i[:name].ljust(name_width)}  #{i[:colorized_state]}"
           all_online = (all_online and (i[:state] == 'running'))

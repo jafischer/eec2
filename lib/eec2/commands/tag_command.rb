@@ -27,6 +27,6 @@ class TagCommand < SubCommand
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
     sub_cmd_usage 'ERROR: No tag name specified' if @sub_options[:tag].nil?
 
-    @ec2_wrapper.add_tag( args, @sub_options[:tag], @sub_options[:value])
+    ec2_wrapper.add_tag( args, @sub_options[:tag], @sub_options[:value])
   end
 end

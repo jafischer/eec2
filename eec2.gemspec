@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '1.4.0'
+  s.version     = '1.4.1'
   s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
@@ -32,5 +32,4 @@ Gem::Specification.new do |s|
 
   s.add_dependency('trollop', ['~> 2.0'])
   s.add_dependency('aws-sdk', ['~> 2.3'])
-
 end

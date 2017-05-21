@@ -25,7 +25,7 @@ class ListCommand < SubCommand
     # Longer implies long.
     @sub_options[:long] = true if @sub_options[:longer]
 
-    instance_infos, name_width = @ec2_wrapper.get_instance_info args
+    instance_infos, name_width = ec2_wrapper.get_instance_info args
 
     # Print headings if in long mode.
     if !instance_infos.empty? and @sub_options[:long]
@@ -48,7 +48,7 @@ class ListCommand < SubCommand
         next if !@sub_options[:state].nil? and i[:state] != @sub_options[:state]
 
         if @sub_options[:long]
-          cost       = @ec2_wrapper.get_instance_cost i
+          cost       = ec2_wrapper.get_instance_cost i
           total_cost = total_cost + (i[:state] == 'running' ? cost : 0)
 
           line = "#{i[:name].ljust(name_width)} " +

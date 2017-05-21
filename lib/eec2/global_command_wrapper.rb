@@ -89,21 +89,20 @@ class GlobalCommandWrapper
     begin
       sub_command = @sub_commands[command].call @global_parser, @global_options
 
+      sub_command.perform @args
     rescue Aws::Errors::MissingRegionError, Aws::Errors::MissingCredentialsError
       message = <<-EOS
         It looks like this is the first time you've run this script.
-        As a one-time configuration step, please use the 'config' command to setup eec2.
-        (see below for help).
-
-        Note: if you have not yet created your AWS access key id and secret access key,
-        you can do so here: https://console.aws.amazon.com/iam/home
-
+        As a one-time configuration step, please use the 'config' command to set your AWS region,
+        and your AWS credentials.
       EOS
-      $stderr.puts message.brown
-      @global_parser.educate $stderr
+      $stderr.puts message.gsub(/^ +/, '').brown
+      ConfigCommand.new(nil, {}).perform ['--help']
+      exit 1
+    rescue => ex
+      raise ex if ENV['NO_CATCH']
+      $stderr.puts "\nERROR: #{ex}".red.bold
       exit 1
     end
-
-    sub_command.perform @args
   end
 end

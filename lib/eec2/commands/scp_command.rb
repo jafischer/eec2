@@ -35,7 +35,7 @@ class ScpCommand < SubCommand
       arg = arg.gsub '\\', '/'
       if arg.match /:/
         instance_name                  = arg.sub /:.*/, ''
-        instance_map[instance_name], _ = @ec2_wrapper.get_instance_info [instance_name]
+        instance_map[instance_name], _ = ec2_wrapper.get_instance_info [instance_name]
 
         instance_map[instance_name].each do |i|
           unless @sub_options[:ignore]

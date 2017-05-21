@@ -1,4 +1,5 @@
 require 'eec2/ec2_wrapper'
+require 'trollop'
 
 # Base class for sub-commands. Each contains a parser for the sub-options, and a method to perform the actual command.
 class SubCommand
@@ -12,8 +13,11 @@ class SubCommand
     # since the @sub_parser is actually created by the derived class.
     # I like to get files to a warning-free state when I can, even if that sometimes involves trickery like this...
     @sub_parser     = @sub_parser
+  end
 
-    @ec2_wrapper    = Ec2Wrapper.new(global_options)
+  def ec2_wrapper
+    @ec2_wrapper = Ec2Wrapper.new(@global_options) if @ec2_wrapper.nil?
+    @ec2_wrapper
   end
 
   def perform(args)
@@ -21,25 +25,14 @@ class SubCommand
       @sub_options = @sub_parser.parse args
     end
 
-    # NO_CATCH: don't wrap the call; want to see the callstack if an exception occurs.
-    if ENV['NO_CATCH']
-      _perform args
-    else
-      begin
-        _perform args
-      rescue => ex
-        $stderr.puts "ERROR: #{ex}".red.bold
-        exit 1
-      end
-    end
+    _perform args
   end
 
-  # This is a pure virtual method
-  def _perform(args)
-  end
+  # This is a virtual method
+  def _perform(args); end
 
   def sub_cmd_usage(message)
-    $stderr.puts "#{message}\n\n".red.bold
+    $stderr.puts "#{message}\n".red.bold
     # @global_parser.educate $stderr
     # $stderr.puts "\n"
     @sub_parser.educate $stderr

@@ -40,8 +40,8 @@ class ConfigCommand < SubCommand
     if @sub_options[:region]
       config_file = "#{@aws_dir}/config"
 
-      unless @ec2_wrapper.regions.include? @sub_options[:region]
-        sub_cmd_usage "ERROR: invalid region #{@sub_options[:region]}\n       Valid regions: #{@ec2_wrapper.regions.join ', '}"
+      unless ec2_wrapper.regions.include? @sub_options[:region]
+        sub_cmd_usage "ERROR: invalid region #{@sub_options[:region]}\n       Valid regions: #{ec2_wrapper.regions.join ', '}"
       end
       $stderr.puts 'Setting region.'
 

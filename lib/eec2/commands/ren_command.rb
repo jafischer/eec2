@@ -29,7 +29,7 @@ class RenCommand < SubCommand
       wildcard = true
     end
 
-    instance_infos, _ = @ec2_wrapper.get_instance_info [args[0]]
+    instance_infos, _ = ec2_wrapper.get_instance_info [args[0]]
 
     # Need to make local copy of args, because if we attempt to modify args itself with a .sub! call, we get "can't modify frozen String (RuntimeError)"
     local_args = [ args[0].dup, args[1].dup ]
@@ -40,7 +40,7 @@ class RenCommand < SubCommand
 
     instance_infos.each do |i|
       new_name = wildcard ? i[:name].sub(local_args[0], local_args[1]) : local_args[1]
-      @ec2_wrapper.rename_instance i[:id], new_name
+      ec2_wrapper.rename_instance i[:id], new_name
     end
   end
 end
