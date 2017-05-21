@@ -1,21 +1,24 @@
 # EEC2: Enhanced EC2
 
 ## Overview
-This gem provides a number of command line tools that greatly simplify working with
+Eec2 provides a number of command line tools that greatly simplify working with
 Amazon EC2 instances. 
 
 Why use eec2, when there's already an AWS CLI? 
-The key aim of eec2 is **convenience**, especially for the common set of operations that I found myself doing in my own work.
+
+The key aim of eec2 is **convenience**. Have you ever struggled to manually perform some operation
+on a dozen or more EC2 instances by copying their IP addresses and running ssh or scp commands one 
+by one? Then eec2 is for you.
 
 All eec2 commands operate on **instance names**, rather than IDs.
-What's more, you can use wildcards to operate on multiple instances.
+What's more, you can use **wildcards** to operate on multiple instances.
 
 #### Example
 For instance, logging into instances is as simple as `eec2 ssh my-node-server`.
 
-But where eec2 really shines is when working with multiple instances. Let's say you need to
-create 16 load test instances, deploy some files to them, and then launch the tests.
-With eec2, this can be done so easily:
+But to illustrate how eec2 really shines when working with multiple instances, let's say you 
+need to create 16 load test instances, deploy some files to them, and then launch the tests.
+With eec2, this can be done easily:
 
 ```bash
 eec2 create [options omitted for brevity] loadtest-{1..16}
@@ -23,36 +26,42 @@ eec2 scp somefile anotherfile *.sh *.yml loadtest-\*:
 eec2 ssh loadtest-\* -c './start-loadtest.sh'
 ```
 
-Eec2 has a convenient 'ls' command: `eec2 ls -l`
+Eec2 has a convenient 'ls' command, that, in its "long form", will show you the estimated 
+monthly cost: `eec2 ls -l`
 
-![Sample output](https://s3.amazonaws.com/1ab947ef/eec2-screen1.png)
+![Sample output](https://raw.githubusercontent.com/jafischer/eec2/master/eec2-screen1.png)
 
-With even more detail: `eec2 ls -L`
+And with even more detail (note the capital `-L` vs `-l`): `eec2 ls -L`
 
-![Sample output](https://s3.amazonaws.com/1ab947ef/eec2-screen2.png)
+![Sample output](https://raw.githubusercontent.com/jafischer/eec2/master/eec2-screen2.png)
 
 ### Commands
 Here are brief descriptions of each command. For full details, use `eec2 help COMMAND` to see each command's details.
 
 ##### config
-Use this command to set up your AWS config files (in ~/.aws).
+If you haven't used the AWS CLI before, then you'll need to use this command (just once) to create 
+configure your AWS credentials and AWS region.
 ##### create
-Create (AKA 'launch') EC2 instance(s).
+Create (AKA 'launch') instance(s). Create 100 instances and contribute to the Seattle economy.
 ##### delete
-Delete (terminate) EC2 instance(s).
+Delete (terminate) instance(s). Delete all of the things! Very wildcard. So danger!
 ##### ip-add, ip-ls, ip-rm
 Configure private IP addresses.
 ##### ls
-List the specified EC2 instance(s).
+List the specified instance(s) and see how much Kenny, who never remembers to shut down his instances, 
+is costing you every month.
 ##### ren
-Renames the specified EC2 instance(s).
+Renames the specified instance(s). Including bulk rename with wildcards! Rename `old*` to `new*` 
+just because you can.
 ##### scp
-Copy files to and from the specified EC2 instance(s).
+Copy files to and from the specified instance(s). The command syntax is essentially the same as the scp command, 
+but with instance names in place of IP addresses. And with wildcards! Did I mention that?
 ##### ssh
-Login to the specified EC2 instance(s) and optionally run a command.
+Login to the specified instance(s) or run a command. Now you can `sudo yum update` all of your instances at once 
+because _security_.
 ##### start
-Start the specified EC2 instance(s).
+Yin.
 ##### stop
-Stop the specified EC2 instance(s).
+Yang.
 ##### tag
-Manipulate instance tags.
+Add, modify or remove instance tags.
