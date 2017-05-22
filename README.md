@@ -39,10 +39,10 @@ And with even more detail (note the capital `-L` vs `-l`): `eec2 ls -L`
 ![Sample output](https://raw.githubusercontent.com/jafischer/eec2/master/eec2-screen2.png)
 
 ## Commands
-Here are brief descriptions of each command. For full details, use `eec2 help COMMAND` to see each command's details.
+Here are brief descriptions of each command. For full details, use `eec2 help COMMAND` to see each command's help text.
 
 #### config
-If you haven't used the AWS CLI before, then you'll need to use this command (just once) to create 
+If you haven't used the AWS CLI before, then you'll need to use this command (just once) to  
 configure your AWS credentials and AWS region.
 #### create
 Create (AKA 'launch') instance(s). Create 100 instances and contribute to the Seattle economy.
@@ -68,3 +68,24 @@ Yin.
 Yang.
 #### tag
 Add, modify or remove instance tags.
+
+## Aliases
+Speaking of convenience, why even type `eec2 ssh` when a simple `es` will do? Just run the
+following commands, and I guarantee you will grow a genuine Unix neckbeard:
+```bash
+cat >> ~/.bashrc <<EOS
+alias es='eec2 ssh'
+alias ec='eec2 scp'
+alias el='eec2 ls -L'
+alias elr='eec2 ls -L --state running'
+EOS
+```
+
+Windows users can grow neckbeards too. As long as they use PowerShell:
+```
+# Add these functions to your $profile file:
+function es { eec2 ssh $args }
+function ec { eec2 scp $args }
+function el { eec2 ls -l $args }
+function elr { eec2 ls -l --state running $args }
+```
