@@ -51,7 +51,7 @@ Delete (terminate) instance(s). Delete all of the things! Very wildcard. So dang
 #### ip-add, ip-ls, ip-rm
 Configure private IP addresses.
 #### ls
-List the specified instance(s) and see how much Kenny, who never remembers to shut down his instances, 
+List instances and see how much Kenny, who never remembers to shut down his instances, 
 is costing you every month.
 #### ren
 Renames the specified instance(s). Including bulk rename with wildcards! Rename `old*` to `new*` 

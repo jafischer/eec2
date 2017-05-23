@@ -37,9 +37,6 @@ class ConfigCommand < SubCommand
     if @sub_options[:region]
       config_file = "#{@aws_dir}/config"
 
-      unless ec2_wrapper.regions.include? @sub_options[:region]
-        sub_cmd_usage "ERROR: invalid region #{@sub_options[:region]}\n       Valid regions: #{ec2_wrapper.regions.join ', '}"
-      end
       $stderr.puts 'Setting region.'
 
       # In case the file exists as a symlink, delete it first.
@@ -52,6 +49,7 @@ class ConfigCommand < SubCommand
         EOS
         f.puts contents.gsub(/^ +/, '')
       end
+      File.chmod 0o600, config_file
     end
 
     if @sub_options[:key]
@@ -68,6 +66,7 @@ class ConfigCommand < SubCommand
         EOS
         f.puts contents.gsub(/^ +/, '')
       end
+      File.chmod 0o600, credentials_file
     end
   end
 end

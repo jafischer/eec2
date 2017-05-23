@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '1.4.4'
+  s.version     = '1.4.5'
   s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
   s.authors     = ['Jonathan Fischer']
-  s.email       = 'jonathan.fischer@gmail.com'
+  s.email       = 'eec2gem@gmail.com'
   s.files       = %w[
                   bin/eec2
                   lib/eec2.rb
