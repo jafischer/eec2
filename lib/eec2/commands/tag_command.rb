@@ -5,9 +5,9 @@ class TagCommand < SubCommand
   def initialize(global_parser, global_options)
     @sub_parser = Trollop::Parser.new do
       long_banner = <<-EOS
-        tag -- Adds tags to the specified EC2 instance(s)
+        tag -- Adds tags to the specified EC2 instance(s). With no options, lists all tags for the instance(s).
 
-        Command usage: #{'tag INSTANCE... --tag TAG [--value VALUE]'.green}
+        Command usage: #{'tag INSTANCE... [--tag TAG [--value VALUE]]'.green}
 
       EOS
 
@@ -22,8 +22,11 @@ class TagCommand < SubCommand
 
   def _perform(args)
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
-    sub_cmd_usage 'ERROR: No tag name specified' if @sub_options[:tag].nil?
 
-    ec2_wrapper.add_tag( args, @sub_options[:tag], @sub_options[:value])
+    if @sub_options[:tag].nil?
+      ec2_wrapper.list_tags args
+    else
+      ec2_wrapper.add_tag args, @sub_options[:tag], @sub_options[:value]
+    end
   end
 end

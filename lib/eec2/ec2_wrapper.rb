@@ -1,10 +1,10 @@
-# AWS SDK: see http://docs.aws.amazon.com/sdkforruby/api/index.html
-# And http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html specifically for the EC2 client.
+# AWS EC2 SDK: see http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html
 require 'aws-sdk'
 # Trollop: a command-line argument parser that I prefer over 'optparse'.
 # See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
 require 'json'
+require 'concurrent'
 
 require 'eec2/ec2_costs'
 
@@ -19,8 +19,7 @@ class Ec2Wrapper
 
   # Initialize method.
   #
-  # @param [Trollop::Parser] global_parser
-  # @param [Hash] options Contains optional :region, :key, and :secret.
+  # @param [Hash] options Contains optional :region
   def initialize(options)
     Aws.use_bundled_cert!
 
@@ -49,6 +48,9 @@ class Ec2Wrapper
              @ec2.describe_instances(filters: [{ name: 'tag:Name', values: names }])
            end
 
+    # TODO: jafischer-2017-05-26 Get rid of name_width here, and just use .map wherever we
+    # need it. E.g.:
+    # name_width = instance_infos.map {|i| i[:name].length }.max
     name_width     = 0
     instance_infos = []
 
@@ -62,13 +64,14 @@ class Ec2Wrapper
           launch_time:    instance.launch_time,
           public_ip:      instance.public_ip_address.nil? ? '<n/a>' : instance.public_ip_address,
           private_ip:     instance.private_ip_address.nil? ? '<n/a>' : instance.private_ip_address,
-          login_user:     'ec2-user',
+          login_user:     nil,
           type:           instance.instance_type,
           region:         instance.placement.availability_zone,
           tenancy:        instance.placement.tenancy,
           key:            instance.key_name,
           key_path:       "#{Dir.home}/.ssh/#{instance.key_name}.pem",
           net_interfaces: instance.network_interfaces,
+          ami:            instance.image_id,
         }
         instance.tags.each do |tag|
           if tag.key == 'Name' and !tag.value.empty?
@@ -186,6 +189,78 @@ class Ec2Wrapper
                        resources: [instance_id],
                        tags:      [{ key: 'Name', value: new_name }]
                      })
+  end
+
+
+  def check_login_names(instance_infos)
+    # Find any instances that don't have their login_user tag set (and are running).
+    unset_instances = instance_infos.select { |i| i[:state] == 'running' && i[:login_user].nil? }
+
+    # Oh and skip any that don't have the key file in ~/.ssh
+    unset_instances = unset_instances.select { |u| File.exists? u[:key_path] }
+
+    unless unset_instances.empty?
+      $stderr.puts "Note: the following instances do not have the 'login_user' Tag set:".brown
+      $stderr.puts ((unset_instances.map { |i| i[:name] }).join ', ').brown
+      $stderr.puts 'Attempting to determine the login user automatically...'.brown
+
+      # No need to check any particular AMI more than once, because they will all have the same login user.
+      # So lets build a list of unique AMIs
+      amis = (unset_instances.map { |i| i[:ami] }).uniq
+      $stderr.puts "Unique AMIs: #{amis.join ', '}".brown
+
+      # Now build a list of instances that we'll check (just need one for each AMI)
+      ami_instances = amis.map { |ami| (unset_instances.select { |u| u[:state] == 'running' && u[:ami] == ami })[0] }
+
+      $stderr.puts "Instances to ssh to: #{(ami_instances.map { |ai| ai[:name] }).join ' '}".brown
+
+      # Attempt to ssh to each instance using 4 possible login users.
+      possible_login_users = %w[ec2-user ubuntu centos root]
+      ami_futures          = {}
+      ami_instances.each do |i|
+        $stderr.puts "Trying the following login users for instance '#{i[:name]}' (AMI #{i[:ami]}): #{possible_login_users.join ', '}".brown
+        command = ''
+        possible_login_users.each do |login_user|
+          command += "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -q -i #{i[:key_path]} #{login_user}@#{i[:public_ip]} echo #{login_user} || "
+        end
+        command              += 'echo unknown'
+        ami_futures[i[:ami]] = Concurrent::Future.execute { `#{command}`.chomp }
+      end
+
+      # Now wait for async commands to complete (future#value is blocking unless you pass 0 as a parameter)
+      ami_futures.each do |ami, future|
+        login_user = future.value
+
+        if login_user == 'unknown'
+          $stderr.puts "ERROR: Could not determine login user for AMI #{ami}; you will have to set the login_user tag manually.".red.bold
+        else
+          $stderr.puts "The login user for AMI #{ami} is ".brown + "#{login_user}.".green.bold
+          $stderr.puts "Updating the following instances: #{(unset_instances.select { |u| u[:ami] == ami }).map { |u| u[:name] }}"
+          @ec2.create_tags({
+                             resources: (unset_instances.select { |u| u[:ami] == ami }).map { |u| u[:id] },
+                             tags:      [{ key: 'login_user', value: login_user }]
+                           })
+        end
+      end
+    end
+  end
+
+
+  def list_tags(names)
+    instance_infos, _ = get_instance_info names
+    instance_infos.each do |i|
+      puts "#{i[:name]}:" if instance_infos.count > 1
+      resp = @ec2.describe_tags({
+                                  filters: [{
+                                              name:   "resource-id",
+                                              values: [i[:id]]
+                                            }]
+                                })
+      puts '<No tags are set>' if resp.tags.empty?
+      resp.tags.each do |tag|
+        puts "    #{tag.key}: #{tag.value}"
+      end
+    end
   end
 
 
