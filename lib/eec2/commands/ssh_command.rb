@@ -69,7 +69,7 @@ class SshCommand < SubCommand
         $stderr.puts "Output from #{i[:name]}".green.bold
         print output
       end
-      $stderr.puts "#{i[:name]}: the ssh command failed".red.bold if future.rejected?
+      $stderr.puts "#{i[:name]}: the ssh command failed".red.bold if future.rejected? && !command_line.empty?
     end
   end
 end
