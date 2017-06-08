@@ -4,20 +4,21 @@
 Eec2 provides a number of commands that greatly simplify working with
 Amazon EC2 cloud instances.
 
-But why use eec2, when there's already the [AWS CLI](https://aws.amazon.com/cli/)? Eec2 doesn't aim 
-to replace the AWS CLI. For one thing, it only covers a subset of the commands that are 
+But why use eec2, you ask, when there's already the [AWS CLI](https://aws.amazon.com/cli/)? Eec2 isn't
+intended to be a replacement for the AWS CLI. For one thing, it only covers a subset of the commands that are 
 available via the AWS CLI. 
-The key goal is **convenience** for a small set of very common operations.
+For eec2, the key goal is **convenience** for a small set of very common operations.
 
 Have you ever struggled to manually perform some operation
 on a dozen or more EC2 instances by copying their IP addresses and running ssh or scp commands one 
 by one? Eec2 was designed just for such tasks. 
 
-All eec2 commands operate on **instance names**, rather than IDs.
+All eec2 commands operate on **instance names**, rather than instance IDs or IP addresses.
 What's more, you can use **wildcards** to operate on multiple instances.
 
-## Example
-For instance, logging into instances is as simple as `eec2 ssh my-node-server`.
+## Examples
+For instance, logging into instances is as simple as `eec2 ssh my-node-server`. Eec2 will detect
+the ssh key to use, the instance's IP address, and it will even automatically determine the login name.
 
 But to illustrate how eec2 really shines when working with multiple instances, let's say you 
 need to create 16 load test instances, deploy some files to them, and then launch the tests.
@@ -27,6 +28,8 @@ With eec2, this can be done easily:
 eec2 create [options omitted for brevity] loadtest-{1..16}
 eec2 scp somefile anotherfile *.sh *.yml loadtest-*:
 eec2 ssh 'loadtest-*' -c './start-loadtest.sh'
+# ... later, when done with the load tests:
+eec2 delete 'loadtest-*'
 ```
 
 Eec2 has a convenient list (`ls`) command, that, in its "long form", will show you the estimated 
