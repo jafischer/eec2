@@ -48,7 +48,7 @@ class SshCommand < SubCommand
     instance_infos.each do |i|
       if (i[:state] == 'running') && (File.exists? i[:key_path])
         ssh_command = 'ssh -o ServerAliveInterval=100 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -q ' +
-          "-i #{i[:key_path]} #{i[:login_user]}@#{i[:public_ip]} #{command_line}"
+          "-i #{i[:key_path]} #{i[:login_user]}@#{i[:public_ip]} '#{command_line}'"
         # If multiple instances, then run the commands asynchronously.
         if instance_infos.count == 1
           system ssh_command
