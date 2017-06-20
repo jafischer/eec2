@@ -52,7 +52,7 @@ class SshCommand < SubCommand
         # If multiple instances, then run the commands asynchronously.
         if instance_infos.count == 1
           system ssh_command
-          $stderr.puts 'The ssh command failed'.red.bold if $?.exitstatus != 0
+          $stderr.puts 'The ssh command failed'.red.bold if $?.exitstatus != 0 && !command_line.nil?
         else
           # Using the whole instance object as the key for the futures hash here, because we can't use
           # the instance name, since multiple instances might have the same name.
