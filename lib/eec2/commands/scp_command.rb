@@ -59,7 +59,7 @@ class ScpCommand < SubCommand
           if key_file.nil?
             key_file = i[:key_path]
           else
-            raise 'ERROR: all instances must use same key file' if key_file != i[:key_path] unless @sub_options[:ignore]
+            raise 'All instances must use same key file' if key_file != i[:key_path] unless @sub_options[:ignore]
           end
         end
       end

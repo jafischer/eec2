@@ -12,7 +12,8 @@ class StopCommand < SubCommand
 
       banner long_banner.gsub(/^ {8}/, '')
 
-      opt :wait, 'Wait for the instance to come to a stopped state', default: false, short: '-w'
+      opt :force, 'Stop the instance even if it is controlled by OpsWorks', default: false
+      opt :wait, 'Wait for the instance to come to a stopped state', default: false
     end
 
     super(global_parser, global_options)
@@ -31,9 +32,19 @@ class StopCommand < SubCommand
         puts "Instance #{i[:name]} isn't running"
       end
     end
+
+    unless @sub_options[:force]
+      tags = ec2_wrapper.get_tag instance_ids, 'opsworks:instance'
+
+      unless tags.empty?
+        opsworks_instance_ids = tags.map &:resource_id
+        opsworks_instance_infos = instance_infos.select { |i| opsworks_instance_ids.include? i[:id]}
+        raise "One or more instances are controlled by OpsWorks; specify --force if this is really intended:\n    #{(opsworks_instance_infos.map { |oi| oi[:name]}).join ', '}"
+      end
+    end
+
     # noinspection RubyResolve
     ec2_wrapper.ec2.stop_instances instance_ids: instance_ids
-
 
     if @sub_options[:wait]
       all_offline = false

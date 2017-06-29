@@ -257,6 +257,21 @@ class Ec2Wrapper
   end
 
 
+  def get_tag(instance_ids, tag_name)
+    resp              = @ec2.describe_tags({
+                                             filters: [{
+                                                         name:   'resource-id',
+                                                         values: instance_ids
+                                                       },
+                                                      {
+                                                        name: 'tag-key',
+                                                        values: [tag_name]
+                                                       }]
+                                           })
+    resp.tags
+  end
+
+
   def list_tags(names)
     instance_infos, _ = get_instance_info names
     instance_infos.each do |i|
@@ -307,39 +322,39 @@ class Ec2Wrapper
 
   def region_to_display
     {
-      'ap-south-1' =>     'Asia Pacific (Mumbai)',
+      'ap-south-1'     => 'Asia Pacific (Mumbai)',
       'ap-northeast-2' => 'Asia Pacific (Seoul)',
       'ap-southeast-1' => 'Asia Pacific (Singapore)',
       'ap-southeast-2' => 'Asia Pacific (Sydney)',
       'ap-northeast-1' => 'Asia Pacific (Tokyo)',
-      'ca-central-1' =>   'Canada (Central)',
-      'eu-central-1' =>   'EU (Frankfurt)',
-      'eu-west-1' =>      'EU (Ireland)',
-      'eu-west-2' =>      'EU (London)',
-      'sa-east-1' =>      'South America (Sao Paulo)',
-      'us-east-1' =>      'US East (N. Virginia)',
-      'us-east-2' =>      'US East (Ohio)',
-      'us-west-1' =>      'US West (N. California)',
-      'us-west-2' =>      'US West (Oregon)',
+      'ca-central-1'   => 'Canada (Central)',
+      'eu-central-1'   => 'EU (Frankfurt)',
+      'eu-west-1'      => 'EU (Ireland)',
+      'eu-west-2'      => 'EU (London)',
+      'sa-east-1'      => 'South America (Sao Paulo)',
+      'us-east-1'      => 'US East (N. Virginia)',
+      'us-east-2'      => 'US East (Ohio)',
+      'us-west-1'      => 'US West (N. California)',
+      'us-west-2'      => 'US West (Oregon)',
     }
   end
 
   def display_to_region
     {
-      'Asia Pacific (Mumbai)' =>     'ap-south-1',
-      'Asia Pacific (Seoul)' =>      'ap-northeast-2',
-      'Asia Pacific (Singapore)' =>  'ap-southeast-1',
-      'Asia Pacific (Sydney)' =>     'ap-southeast-2',
-      'Asia Pacific (Tokyo)' =>      'ap-northeast-1',
-      'Canada (Central)' =>          'ca-central-1',
-      'EU (Frankfurt)' =>            'eu-central-1',
-      'EU (Ireland)' =>              'eu-west-1',
-      'EU (London)' =>               'eu-west-2',
+      'Asia Pacific (Mumbai)'     => 'ap-south-1',
+      'Asia Pacific (Seoul)'      => 'ap-northeast-2',
+      'Asia Pacific (Singapore)'  => 'ap-southeast-1',
+      'Asia Pacific (Sydney)'     => 'ap-southeast-2',
+      'Asia Pacific (Tokyo)'      => 'ap-northeast-1',
+      'Canada (Central)'          => 'ca-central-1',
+      'EU (Frankfurt)'            => 'eu-central-1',
+      'EU (Ireland)'              => 'eu-west-1',
+      'EU (London)'               => 'eu-west-2',
       'South America (Sao Paulo)' => 'sa-east-1',
-      'US East (N. Virginia)' =>     'us-east-1',
-      'US East (Ohio)' =>            'us-east-2',
-      'US West (N. California)' =>   'us-west-1',
-      'US West (Oregon)' =>          'us-west-2',
+      'US East (N. Virginia)'     => 'us-east-1',
+      'US East (Ohio)'            => 'us-east-2',
+      'US West (N. California)'   => 'us-west-1',
+      'US West (Oregon)'          => 'us-west-2',
     }
   end
 
@@ -347,7 +362,7 @@ class Ec2Wrapper
   #
   # @param [Hash] instance_info A single instance_info entry from the array returned by {#get_instance_info}.
   # @return [float] Instance price.
-  def get_instance_cost2(instance_info)
+  def get_instance_cost_old(instance_info)
     @aws_dir = "#{Dir.home}/.aws"
     if @price_list.nil?
       # Get the pricing list for AmazonEC2

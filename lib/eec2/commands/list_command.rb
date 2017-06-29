@@ -85,7 +85,7 @@ class ListCommand < SubCommand
     end
 
     if @sub_options[:long] and !instance_infos.empty?
-      puts "\nTotal estimated cost: $#{'%.2f' % total_cost.round(2)}/hr, $#{'%.2f' % (total_cost * HOURS_PER_MONTH).round(2)}/mo (based on on-demand Linux costs for the given region)"
+      puts "\nTotal estimated cost: $#{'%.2f' % total_cost.round(2)}/hr, $#{'%.2f' % (total_cost * HOURS_PER_MONTH).round(2)}/mo\n(based on on-demand Linux costs for the given region; see http://www.ec2instances.info)"
       puts '*Instance is running on hardware marked as degraded.' if degraded_instances
     end
   end

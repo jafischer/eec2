@@ -26,7 +26,7 @@ class SshCommand < SubCommand
   def _perform(args)
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
 
-    instance_infos, name_width = ec2_wrapper.get_instance_info args
+    instance_infos, _ = ec2_wrapper.get_instance_info args
     command_line               = @sub_options[:command]
 
     sub_cmd_usage 'ERROR: Multiple instances, but no command specified.' if command_line.nil? and instance_infos.count > 1
