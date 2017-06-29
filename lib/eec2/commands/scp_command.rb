@@ -44,8 +44,6 @@ class ScpCommand < SubCommand
     key_file      = nil
 
     args.each do |arg|
-      # First, convert any backslashes to forward slashes.
-      arg = arg.gsub '\\', '/'
       if arg.match /:/
         instance_name                  = arg.sub /:.*/, ''
         instance_map[instance_name], _ = ec2_wrapper.get_instance_info [instance_name]
@@ -84,7 +82,7 @@ class ScpCommand < SubCommand
       end
     else
       # Last arg doesn't contain a colon, so it's a local file path.
-      last_args.push last_arg
+      last_args.push last_arg.gsub '\\', '/'
     end
 
     futures = {}
@@ -100,18 +98,18 @@ class ScpCommand < SubCommand
             end
           end
         else
-          source_args.push arg
+          source_args.push arg.gsub '\\', '/'
         end
       end
 
       # puts 'Executing scp with these file args:'.green.bold + " #{@sub_options[:recurse] ? '-r' : ''} #{source_args.join ' '} #{target_arg}"
-      scp_command = 'scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -q ' +
+      scp_command = 'scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ' + (last_args.count == 1 ? '' : '-q ') +
         "-i #{key_file} -p #{@sub_options[:recurse] ? '-r' : ''} #{source_args.join ' '} #{target_arg}"
       if last_args.count == 1
         system scp_command
       else
-        instance_name = target_arg.sub(/.*@/,'').sub(/:.*/, '')
-        futures[instance_name] = Concurrent::Future.execute { `#{scp_command}` }
+        instance_name          = target_arg.sub(/.*@/, '').sub(/:.*/, '')
+        futures[instance_name] = Concurrent::Future.execute {`#{scp_command}`}
       end
     end
 
