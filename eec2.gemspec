@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
   s.authors     = ['Jonathan Fischer']
   s.email       = 'eec2gem@gmail.com'
-  s.files       = %w[
+  s.files       = %w(
                   bin/eec2
                   lib/eec2.rb
                   lib/eec2/ec2_costs.rb
@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
                   lib/eec2/commands/start_command.rb
                   lib/eec2/commands/stop_command.rb
                   lib/eec2/commands/tag_command.rb
-                  ]
+                  )
   s.executables << 'eec2'
   s.homepage = 'https://github.com/jafischer/eec2'
   s.license  = 'MIT'

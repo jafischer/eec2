@@ -224,7 +224,7 @@ class Ec2Wrapper
       $stderr.puts "Instances to ssh to: #{(ami_instances.map { |ai| ai[:name] }).join ' '}".brown
 
       # Attempt to ssh to each instance using 4 possible login users.
-      possible_login_users = %w[ec2-user ubuntu centos root]
+      possible_login_users = %w(ec2-user ubuntu centos root)
       ami_futures          = {}
       ami_instances.each do |i|
         $stderr.puts "Trying the following login users for instance '#{i[:name]}' (AMI #{i[:ami]}): #{possible_login_users.join ', '}".brown
@@ -301,7 +301,7 @@ class Ec2Wrapper
   end
 
   def regions
-    %w[
+    %w(
       ap-northeast-1
       ap-northeast-2
       ap-south-1
@@ -316,7 +316,7 @@ class Ec2Wrapper
       us-east-2
       us-west-1
       us-west-2
-    ]
+    )
   end
 
 
