@@ -12,7 +12,7 @@ class DeleteCommand < SubCommand
 
       banner long_banner.gsub(/^ {8}/, '')
 
-      opt :force, "Force deletion, do not prompt. It goes without saying, #{'USE WITH CAUTION'.red.bold}.", default: false, short: '-f'
+      opt :force, "Force deletion, do not prompt. It goes without saying, #{'USE WITH CAUTION'.red.bold}.", default: false
     end
 
     super(global_parser, global_options)

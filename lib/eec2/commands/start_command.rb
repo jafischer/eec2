@@ -12,7 +12,7 @@ class StartCommand < SubCommand
 
       banner long_banner.gsub(/^ {8}/, '')
 
-      opt :wait, 'Wait for the instance to come to a running state', default: true, short: '-w'
+      opt :wait, 'Wait for the instance to come to a running state', default: true
     end
 
     super(global_parser, global_options)

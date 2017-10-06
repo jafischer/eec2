@@ -13,8 +13,8 @@ class TagCommand < SubCommand
 
       banner long_banner.gsub /^ {8}/, ''
 
-      opt :tag, 'Tag name', type: String, short: '-t'
-      opt :value, 'Tag value (if no value specified, tag is deleted)', type: String, short: '-v'
+      opt :tag, 'Tag name', type: String
+      opt :value, 'Tag value (if no value specified, tag is deleted)', type: String
     end
 
     super(global_parser, global_options)

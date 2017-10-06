@@ -13,9 +13,9 @@ class ConfigCommand < SubCommand
 
       banner long_banner.gsub(/^ {8}/, '')
 
-      opt :region, 'AWS region (e.g. us-east-1, us-west-2)', type: String, short: '-r'
-      opt :key, 'Your AWS access key id', type: String, short: '-k'
-      opt :secret, 'Your AWS secret access key', type: String, short: '-s'
+      opt :region, 'AWS region (e.g. us-east-1, us-west-2)', type: String
+      opt :key, 'Your AWS access key id', type: String
+      opt :secret, 'Your AWS secret access key', type: String
     end
 
     super(global_parser, global_options)

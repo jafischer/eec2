@@ -14,10 +14,10 @@ class SshCommand < SubCommand
 
       banner long_banner.gsub(/^ {8}/, '')
 
-      opt :command, 'Rather than starting an ssh session, execute the specified command on the instance(s).', type: String, short: '-c'
+      opt :command, 'Rather than starting an ssh session, execute the specified command on the instance(s).', type: String
       # TODO: implement --log
-      # opt :log, 'Save output of command to [instance-name].log', default: false, short: '-l'
-      opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false, short: '-i'
+      # opt :log, 'Save output of command to [instance-name].log', default: false
+      opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false
     end
 
     super(global_parser, global_options)

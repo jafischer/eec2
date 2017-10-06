@@ -19,7 +19,7 @@ class ListCommand < SubCommand
       # opt :test, 'Test', default: false
       opt :long, 'Long format listing', default: false, short: '-l'
       opt :longer, 'Longer format listing', default: false, short: '-L'
-      opt :state, 'List only instances with the specified state', type: String, default: nil, short: '-s'
+      opt :state, 'List only instances with the specified state', type: String, default: nil
     end
 
     super(global_parser, global_options)

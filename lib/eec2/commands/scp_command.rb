@@ -29,8 +29,8 @@ class ScpCommand < SubCommand
 
       banner long_banner.gsub /^ +/, ''
 
-      opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false, short: '-i'
-      opt :recurse, 'Recursively copy entire directories.', default: false, short: '-r'
+      opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false
+      opt :recurse, 'Recursively copy entire directories.', default: false
     end
 
     super(global_parser, global_options)

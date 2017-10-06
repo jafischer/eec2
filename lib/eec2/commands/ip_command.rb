@@ -18,8 +18,8 @@ class IpCommand < SubCommand
 
       banner long_banner.gsub /^ {8}/, ''
 
-      opt :count, '[ip-add only] Number of addresses to add', default: 1, short: '-c'
-      opt :long, '[ip-ls only] Long format listing', default: false, short: '-l'
+      opt :count, '[ip-add only] Number of addresses to add', default: 1
+      opt :long, '[ip-ls only] Long format listing', default: false
     end
 
     super(global_parser, global_options)
