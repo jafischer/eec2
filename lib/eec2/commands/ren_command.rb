@@ -20,26 +20,30 @@ class RenCommand < SubCommand
   end
 
   def _perform(args)
-    sub_cmd_usage 'ERROR: exactly two names must be specified (old name and new name)' unless args.length == 2
+    sub_cmd_usage 'ERROR: no instances names specified' if args.empty?
+    sub_cmd_usage 'ERROR: too many arguments' if args.length > 2
+    
+    old_name = args[0].dup
+    new_name = args.length == 2 ? args[1].dup : ''
+    
     wildcard = false
-    if (args[0].include? '*') or (args[1].include? '*')
-      sub_cmd_usage 'ERROR: both names must contain wildcard' if (args[0].include? '*') != (args[1].include? '*') unless (args[1].empty?)
-      sub_cmd_usage 'ERROR: wildcard support is limited to prefix only (e.g. eec2 ren old-* new-*)' unless (args[0].end_with? '*') and (args[1].end_with? '*' or args[1].empty?)
+    if (old_name.include? '*') or (new_name.include? '*')
+      sub_cmd_usage 'ERROR: both names must contain wildcard' if (old_name.include? '*') != (new_name.include? '*') unless (new_name.empty?)
+      sub_cmd_usage 'ERROR: wildcard must be last character (e.g. eec2 ren old-* new-*)' unless (old_name.end_with? '*') and (new_name.end_with? '*' or new_name.empty?)
       wildcard = true
     end
 
-    instance_infos, _ = ec2_wrapper.get_instance_info [args[0]]
+    instance_infos, _ = ec2_wrapper.get_instance_info [old_name]
 
     # Need to make local copy of args, because if we attempt to modify args itself with a .sub! call, we get "can't modify frozen String (RuntimeError)"
-    local_args = [ args[0].dup, args[1].dup ]
     if wildcard
-      local_args[0].sub! '*', ''
-      local_args[1].sub! '*', ''
+      old_name.sub! '*', ''
+      new_name.sub! '*', ''
     end
 
     instance_infos.each do |i|
-      new_name = wildcard ? i[:name].sub(local_args[0], local_args[1]) : local_args[1]
-      ec2_wrapper.rename_instance i[:id], new_name
+      new_instance_name = (wildcard && !new_name.empty?) ? i[:name].sub(old_name, new_name) : new_name
+      ec2_wrapper.rename_instance i[:id], new_instance_name
     end
   end
 end

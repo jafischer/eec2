@@ -17,6 +17,8 @@ class SshCommand < SubCommand
       opt :command, 'Rather than starting an ssh session, execute the specified command on the instance(s).', type: String
       # TODO: implement --log
       # opt :log, 'Save output of command to [instance-name].log', default: false
+      opt :user, 'Use specified login user instead of the one configured for the instance(s).', type: String
+      opt :key, 'Use specified ssh key file instead of the one configured for the instance(s).', type: String
       opt :ignore, 'Ignore errors (such as some instances not in running state)', default: false
     end
 
@@ -27,9 +29,14 @@ class SshCommand < SubCommand
     sub_cmd_usage 'ERROR: No instance name specified.' if args.empty?
 
     instance_infos, _ = ec2_wrapper.get_instance_info args
-    command_line               = @sub_options[:command]
+    command_line      = @sub_options[:command]
 
     sub_cmd_usage 'ERROR: Multiple instances, but no command specified.' if command_line.nil? and instance_infos.count > 1
+
+    instance_infos.each do |i|
+      i[:key_path]   = @sub_options[:key] unless @sub_options[:key].nil?
+      i[:login_user] = @sub_options[:user] unless @sub_options[:user].nil?
+    end
 
     ec2_wrapper.check_login_names instance_infos
 

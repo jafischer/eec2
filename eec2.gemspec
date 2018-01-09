@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '2.1.0'
+  s.version     = '2.1.1'
   s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
@@ -30,7 +30,8 @@ Gem::Specification.new do |s|
   s.homepage = 'https://github.com/jafischer/eec2'
   s.license  = 'MIT'
 
-  s.add_dependency('trollop', ['~> 2.0'])
-  s.add_dependency('aws-sdk', ['~> 2.3'])
-  s.add_dependency('concurrent-ruby', ['~> 1.0'])
+  s.add_dependency 'trollop', ['~> 2.0']
+  s.add_dependency 'aws-sdk', ['~> 2.3']
+  s.add_dependency 'concurrent-ruby', ['~> 1.0']
+  s.add_dependency 'os', ['~> 1.0']
 end

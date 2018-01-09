@@ -68,5 +68,7 @@ class ConfigCommand < SubCommand
       end
       File.chmod 0o600, credentials_file
     end
+
+    puts 'eec2 successfully configured.'
   end
 end

@@ -1,6 +1,7 @@
 # Trollop: a command-line argument parser that I prefer over 'optparse'.
 # See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
 require 'trollop'
+require 'os'
 
 # Our modules:
 require 'eec2/string_colorize'
@@ -42,6 +43,34 @@ class GlobalCommandWrapper
     # the Parser object in the do block below. So we need to create a variable in this outer scope.
     sub_command_names = @sub_commands.keys
 
+    if OS.windows?
+      alias_msg = <<-EOS
+
+        If running PowerShell (and if not, you should be!), here's a list of handy aliases to add to your $profile file:
+          # ssh:
+          function es  { eec2 ssh $args }
+          # scp:
+          function ec  { eec2 scp $args }
+          # List instances, verbosely:
+          function el  { eec2 ls -l $args }
+          # List running instances:
+          function elr { eec2 ls -l --state running $args }
+      EOS
+    else
+      alias_msg = <<-EOS
+      
+        Here's a list of handy aliases to add to your .bashrc file:
+          # ssh:
+          alias es='eec2 ssh'
+          # scp:
+          alias ec='eec2 scp'
+          # List instances, verbosely:
+          alias el='eec2 ls -L'
+          # List running instances:
+          alias elr='eec2 ls -L --state running'
+      EOS
+    end
+
     @global_parser = Trollop::Parser.new do
       long_banner = <<-EOS
         eec2 -- Enhanced EC2 commands.
@@ -50,6 +79,7 @@ class GlobalCommandWrapper
         Valid commands:
             #{sub_command_names.sort.join("\n    ").green}
         Note: Help for each command can be displayed by specifying 'help COMMAND' or 'COMMAND -h'
+        #{alias_msg}
 
         Global options:
       EOS
