@@ -1,0 +1,10 @@
+# See https://help.github.com/articles/dealing-with-line-endings/
+
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Shell scripts & Ruby scripts should always be LF. (Sometimes I run them from a windows share)
+*.sh text eol=lf
+*.rb text eol=lf
+.bash* text eol=lf
+*.yaml text eol=lf

@@ -63,13 +63,16 @@ class ListCommand < SubCommand
         cost       = ec2_wrapper.get_instance_cost i
         total_cost = total_cost + (i[:state] == 'running' ? cost : 0)
 
+        cost_text = "$#{('%.2f' % (cost * HOURS_PER_MONTH).round(2)).ljust(10)}"
+        cost_text = cost_text.gray if i[:state] != 'running'
+
         line = "#{i[:name].ljust(name_width)} " +
           # ljust counts the escape characters, so account for that:
           i[:colorized_state].ljust(12 + i[:colorized_state].length - i[:state].length) +
           "#{i[:public_ip].ljust(17)}" +
           (@sub_options[:longer] ? "#{i[:private_ip].ljust(16)}" : '') +
           "#{i[:type].ljust(12)}" +
-          "$#{('%.2f' % (cost * HOURS_PER_MONTH).round(2)).ljust(10)}"
+          cost_text
         if @sub_options[:longer]
           line += "$#{('%.3f' % cost).ljust(8)}" +
             "#{i[:launch_time]}".ljust(25) +
