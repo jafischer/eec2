@@ -36,7 +36,7 @@ class ListCommand < SubCommand
     #   instance_infos = JSON.parse File.read('test.json'), symbolize_names: true
     #   name_width = instance_infos.map {|i| i[:name].length }.max
     # else
-      instance_infos, name_width = ec2_wrapper.get_instance_info args
+    instance_infos, name_width = ec2_wrapper.get_instance_info args
     # end
 
     # Print headings if in long mode.
@@ -85,8 +85,10 @@ class ListCommand < SubCommand
     end
 
     if @sub_options[:long] and !instance_infos.empty?
-      puts "\nTotal estimated cost: $#{'%.2f' % total_cost.round(2)}/hr, $#{'%.2f' % (total_cost * HOURS_PER_MONTH).round(2)}/mo\n(based on on-demand Linux costs for the given region; see http://www.ec2instances.info)"
-      puts '*Instance is running on hardware marked as degraded.' if degraded_instances
+      total_per_hr = '%.2f' % total_cost.round(2)
+      total_per_mo = '%.2f' % (total_cost * HOURS_PER_MONTH).round(2)
+      puts "\nTotal estimated cost: $#{total_per_hr}/hr, $#{total_per_mo}/mo (assuming on-demand, Linux instances)"
+      puts '*Instance is running on hardware marked as degraded.'.red if degraded_instances
     end
   end
 end

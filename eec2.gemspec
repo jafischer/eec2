@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '2.1.1'
+  s.version     = '2.2.0'
   s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances, using their Name tag rather than instance id'
@@ -9,7 +9,6 @@ Gem::Specification.new do |s|
   s.files       = %w(
                   bin/eec2
                   lib/eec2.rb
-                  lib/eec2/ec2_costs.rb
                   lib/eec2/ec2_wrapper.rb
                   lib/eec2/string_colorize.rb
                   lib/eec2/global_command_wrapper.rb

@@ -5,8 +5,7 @@ require 'aws-sdk'
 require 'trollop'
 require 'json'
 require 'concurrent'
-
-require 'eec2/ec2_costs'
+require 'digest'
 
 
 # A wrapper class for Aws::EC2, providing some useful extra functionality.
@@ -65,6 +64,9 @@ class Ec2Wrapper
 
     resp.reservations.each do |reservation|
       reservation.instances.each do |instance|
+        # Debugging: dump instance info
+        # File.open("/Users/Jonathan/.aws/instance_#{instance.instance_id}.yaml", 'w') { |f| f.write instance.to_yaml }
+
         instance_info = {
           name:           '<unnamed>',
           id:             instance.instance_id,
@@ -131,22 +133,6 @@ class Ec2Wrapper
     raise "No instances found named: '#{non_wildcard_names.keys.join ' '}'" unless non_wildcard_names.empty?
 
     return instance_infos, name_width
-  end
-
-
-  # Uses the Amazon EC2 price list to determine the running cost of the specified instance.
-  #
-  # @param [Hash] instance_info A single instance_info entry from the array returned by {#get_instance_info}.
-  # @return [float] Instance price.
-  def get_instance_cost(instance_info)
-    cost = Ec2Costs.lookup(
-      # Convert availability zone to region name, e.g. 'us-east-1e' -> 'us-east-1'
-      instance_info[:region].sub(/[a-z]$/, ''),
-      instance_info[:type])
-    return cost unless cost.nil?
-
-    $stderr.puts "WARNING: no price data found for instance type #{instance_info[:type]}"
-    0.0
   end
 
 
@@ -258,16 +244,16 @@ class Ec2Wrapper
 
 
   def get_tag(instance_ids, tag_name)
-    resp              = @ec2.describe_tags({
-                                             filters: [{
-                                                         name:   'resource-id',
-                                                         values: instance_ids
-                                                       },
-                                                      {
-                                                        name: 'tag-key',
-                                                        values: [tag_name]
-                                                       }]
-                                           })
+    resp = @ec2.describe_tags({
+                                filters: [{
+                                            name:   'resource-id',
+                                            values: instance_ids
+                                          },
+                                          {
+                                            name:   'tag-key',
+                                            values: [tag_name]
+                                          }]
+                              })
     resp.tags
   end
 
@@ -362,45 +348,52 @@ class Ec2Wrapper
   #
   # @param [Hash] instance_info A single instance_info entry from the array returned by {#get_instance_info}.
   # @return [float] Instance price.
-  def get_instance_cost_old(instance_info)
+  def get_instance_cost(instance_info)
     @aws_dir = "#{Dir.home}/.aws"
+
+    # Have we retrieved the price list already?
     if @price_list.nil?
       # Get the pricing list for AmazonEC2
-      # See https://aws.amazon.com/blogs/aws/new-aws-price-list-api/
-      # If user's copy of price list exists, use it. Also, if for some reason the price list doesn't exist in the script dir,
-      # then create and use one in the user's dir.
-      # TODO: eventually, check the timestamp of the file and refresh if it's past a certain age.
-      price_list_file = "#{@aws_dir}/aws_price_list.json"
-      if !File.exists? price_list_file
-        script_path = File.expand_path File.dirname(__FILE__)
-        $stderr.puts 'Cached price list not found, retrieving from AWS URL... please wait.'
-        uri      = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json'
+      # See https://aws.amazon.com/about-aws/whats-new/2017/04/use-the-enhanced-aws-price-list-api-to-access-aws-service-and-region-specific-product-and-pricing-information/
+      region            = instance_info[:region].sub(/[a-z]$/, '')
+      price_list_file   = "#{@aws_dir}/aws_price_list-#{region}.json"
+      region_index_file = "#{@aws_dir}/aws_region_index.json"
+      region_index_uri  = URI.parse 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/region_index.json'
+
+      # Get the current set of URLs for the various region price lists.
+      region_index_resp = Net::HTTP.get_response region_index_uri
+
+      # See if it's changed since the last time we retrieved it.
+      current_md5  = Digest::MD5.hexdigest region_index_resp.body
+      existing_md5 = File.exists?(region_index_file) ? Digest::MD5.hexdigest(File.read(region_index_file)) : ''
+      if current_md5 != existing_md5
+        File.open(region_index_file, 'w') { |f| f.write region_index_resp.body }
+        # Clean out all old price list files
+        Dir.glob("#{@aws_dir}/aws_price_list-*.json").each { |file| File.delete(file)}
+      end
+
+      region_index = JSON.parse region_index_resp.body
+
+      # Do we have an up-to-date price list for this instance's region?
+      if !File.exists?(price_list_file)
+        $stderr.puts "Updating cached AWS price list for region #{region}... please wait."
+        uri      = URI.parse "https://pricing.us-east-1.amazonaws.com#{region_index['regions'][region]['currentVersionUrl']}"
         response = Net::HTTP.get_response uri
         raise "Failed to get AWS price list: response code #{response.code}:\n#{response.body}" if response.code.to_i < 200 or response.code.to_i > 299
-        File.open(price_list_file, 'w') do |f|
-          f.write response.body
-        end
+        File.open(price_list_file, 'w') { |f| f.write response.body }
         @price_list = JSON.parse response.body
       else
-        File.open(price_list_file, 'r') do |f|
-          @price_list = JSON.parse(f.read)
-        end
+        File.open(price_list_file, 'r') { |f| @price_list = JSON.parse(f.read) }
       end
     end
 
-    @price_list['products'].each do |_, product|
-      # puts "sku: #{sku}: location #{product['attributes']['location']}, tenancy #{product['attributes']['tenancy']}, "
-      puts "#{product['attributes']['location']}"
-    end
-    exit
     @price_list['products'].each do |sku, product|
-      # TODO: hard-coding US East for now; there's currently a mismatch between how regions are specified in EC2 and how
-      # they're specified in the price list data. So I can't use the --region parameter to find the appropriate section
-      # in the price list...
-      if product['attributes']['location'] == 'US East (N. Virginia)' and
-        product['attributes']['instanceType'] == instance_info[:type]
-        if product['attributes']['tenancy'] == instance_info[:tenancy] or
-          (product['attributes']['tenancy'] == 'Shared' and instance_info[:tenancy] == 'default')
+      if product['attributes']['instanceType'] == instance_info[:type]
+        if product['attributes']['operatingSystem'] == 'Linux' and
+          product['attributes']['preInstalledSw'] == 'NA' and
+          product['attributes']['licenseModel'] == 'No License required' and
+          (product['attributes']['tenancy'] == instance_info[:tenancy] or
+          (product['attributes']['tenancy'] == 'Shared' and instance_info[:tenancy] == 'default'))
           # TODO: Until I can find out how to determine whether an instance is Reserved or On-Demand, we'll use the On-Demand pricing.
           unless @price_list['terms']['OnDemand'][sku].nil?
             # OnDemand terms have only one entry, so just grab the first one (same for priceDimensions):
