@@ -308,11 +308,11 @@ class Ec2Wrapper
 
   def region_to_display
     {
-      'ap-south-1'     => 'Asia Pacific (Mumbai)',
+      'ap-northeast-1' => 'Asia Pacific (Tokyo)',
       'ap-northeast-2' => 'Asia Pacific (Seoul)',
+      'ap-south-1'     => 'Asia Pacific (Mumbai)',
       'ap-southeast-1' => 'Asia Pacific (Singapore)',
       'ap-southeast-2' => 'Asia Pacific (Sydney)',
-      'ap-northeast-1' => 'Asia Pacific (Tokyo)',
       'ca-central-1'   => 'Canada (Central)',
       'eu-central-1'   => 'EU (Frankfurt)',
       'eu-west-1'      => 'EU (Ireland)',
@@ -327,11 +327,11 @@ class Ec2Wrapper
 
   def display_to_region
     {
-      'Asia Pacific (Mumbai)'     => 'ap-south-1',
+      'Asia Pacific (Tokyo)'      => 'ap-northeast-1',
       'Asia Pacific (Seoul)'      => 'ap-northeast-2',
+      'Asia Pacific (Mumbai)'     => 'ap-south-1',
       'Asia Pacific (Singapore)'  => 'ap-southeast-1',
       'Asia Pacific (Sydney)'     => 'ap-southeast-2',
-      'Asia Pacific (Tokyo)'      => 'ap-northeast-1',
       'Canada (Central)'          => 'ca-central-1',
       'EU (Frankfurt)'            => 'eu-central-1',
       'EU (Ireland)'              => 'eu-west-1',
