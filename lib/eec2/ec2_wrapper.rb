@@ -395,14 +395,17 @@ class Ec2Wrapper
           (product['attributes']['tenancy'] == instance_info[:tenancy] or
           (product['attributes']['tenancy'] == 'Shared' and instance_info[:tenancy] == 'default'))
           # TODO: Until I can find out how to determine whether an instance is Reserved or On-Demand, we'll use the On-Demand pricing.
-          unless @price_list['terms']['OnDemand'][sku].nil?
+          unless @price_list['terms']['OnDemand'][product['attributes']['instancesku']].nil?
             # OnDemand terms have only one entry, so just grab the first one (same for priceDimensions):
-            unit = @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['unit']
+            unit = @price_list['terms']['OnDemand'][product['attributes']['instancesku']].values.first['priceDimensions'].values.first['unit']
             if unit != 'Hrs'
               $stderr.puts "WARNING: Instance #{instance_info[:name]}'s price is measured in '#{unit}', not hours."
               $stderr.flush
             end
-            return @price_list['terms']['OnDemand'][sku].values.first['priceDimensions'].values.first['pricePerUnit']['USD'].to_f
+            # puts "sku: #{product['attributes']['instancesku']}"
+            instance_price = @price_list['terms']['OnDemand'][product['attributes']['instancesku']].values.first['priceDimensions'].values.first['pricePerUnit']['USD'].to_f
+            $stderr.puts "WARNING: Instance #{instance_info[:name]} (sku #{product['attributes']['instancesku']}) price is zero" if instance_price == 0
+            return instance_price
           end
         end
       end
