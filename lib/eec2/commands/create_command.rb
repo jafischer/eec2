@@ -2,7 +2,7 @@ require 'eec2/sub_command'
 
 class CreateCommand < SubCommand
   def initialize(global_parser, global_options)
-    @sub_parser = Trollop::Parser.new do
+    @sub_parser = Optimist::Parser.new do
       long_banner = <<-EOS
         create -- Create (AKA 'launch') EC2 instance(s)
 

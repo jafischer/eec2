@@ -1,8 +1,8 @@
 # AWS EC2 SDK: see http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html
 require 'aws-sdk'
-# Trollop: a command-line argument parser that I prefer over 'optparse'.
-# See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
-require 'trollop'
+# Optimist: a command-line argument parser that I prefer over 'optparse'.
+# See: https://github.com/ManageIq/optimist and http://optimist.rubyforge.org/
+require 'optimist'
 require 'json'
 require 'concurrent'
 require 'digest'

@@ -3,7 +3,7 @@ require 'eec2/sub_command'
 
 class TagCommand < SubCommand
   def initialize(global_parser, global_options)
-    @sub_parser = Trollop::Parser.new do
+    @sub_parser = Optimist::Parser.new do
       long_banner = <<-EOS
         tag -- Adds tags to the specified EC2 instance(s). With no options, lists all tags for the instance(s).
 

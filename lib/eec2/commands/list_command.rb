@@ -5,7 +5,7 @@ class ListCommand < SubCommand
   HOURS_PER_MONTH = 730
 
   def initialize(global_parser, global_options)
-    @sub_parser = Trollop::Parser.new do
+    @sub_parser = Optimist::Parser.new do
       long_banner = <<-EOS
         list -- list the specified EC2 instance(s)
 

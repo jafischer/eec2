@@ -1,5 +1,5 @@
 require 'eec2/ec2_wrapper'
-require 'trollop'
+require 'optimist'
 
 # Base class for sub-commands. Each contains a parser for the sub-options, and a method to perform the actual command.
 class SubCommand
@@ -21,7 +21,7 @@ class SubCommand
   end
 
   def perform(args)
-    Trollop::with_standard_exception_handling @sub_parser do
+    Optimist::with_standard_exception_handling @sub_parser do
       @sub_options = @sub_parser.parse args
     end
 

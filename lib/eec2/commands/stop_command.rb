@@ -3,7 +3,7 @@ require 'eec2/sub_command'
 
 class StopCommand < SubCommand
   def initialize(global_parser, global_options)
-    @sub_parser = Trollop::Parser.new do
+    @sub_parser = Optimist::Parser.new do
       long_banner = <<-EOS
         stop -- stop the specified EC2 instance(s)
 

@@ -1,6 +1,6 @@
-# Trollop: a command-line argument parser that I prefer over 'optparse'.
-# See: https://github.com/ManageIq/trollop and http://trollop.rubyforge.org/
-require 'trollop'
+# Optimist: a command-line argument parser that I prefer over 'optparse'.
+# See: https://github.com/ManageIq/optimist and http://optimist.rubyforge.org/
+require 'optimist'
 require 'os'
 
 # Our modules:
@@ -71,7 +71,7 @@ class GlobalCommandWrapper
       EOS
     end
 
-    @global_parser = Trollop::Parser.new do
+    @global_parser = Optimist::Parser.new do
       long_banner = <<-EOS
         eec2 -- Enhanced EC2 commands.
 
@@ -92,7 +92,7 @@ class GlobalCommandWrapper
       stop_on sub_command_names
     end
 
-    @global_options = Trollop::with_standard_exception_handling @global_parser do
+    @global_options = Optimist::with_standard_exception_handling @global_parser do
       @global_parser.parse @args
     end
   end
