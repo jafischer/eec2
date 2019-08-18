@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'eec2'
-  s.version     = '2.2.2'
+  s.version     = '2.2.3'
   # s.date        = Date.today.to_s
   s.summary     = 'Enhanced EC2 commands'
   s.description = 'A set of convenient commands for working with EC2 instances'

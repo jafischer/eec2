@@ -369,7 +369,12 @@ class Ec2Wrapper
       if current_md5 != existing_md5
         File.open(region_index_file, 'w') { |f| f.write region_index_resp.body }
         # Clean out all old price list files
-        Dir.glob("#{@aws_dir}/aws_price_list-*.json").each { |file| File.delete(file)}
+        Dir.glob("#{@aws_dir}/aws_price_list-*.json").each do |file|
+          # Update: only delete if it's more than 4 weeks old, I'm tired of how long the pricelist API takes.
+          file_age_in_days = (Time.now - File.stat(file).mtime).to_i / 86400.0
+          # puts "Age of #{file}: #{file_age_in_days}"
+          File.delete(file) if file_age_in_days > 28
+        end
       end
 
       region_index = JSON.parse region_index_resp.body
