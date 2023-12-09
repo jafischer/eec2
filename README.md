@@ -1,5 +1,9 @@
 # EEC2: Enhanced EC2
 
+NOTE: This project has been completely obsoleted by the relentless march of progress.
+Managing individual EC2 instances is so last week. Sniff. But I had a blast writing it,
+and it shall remain here for posterity.
+
 ## Overview
 Eec2 provides a number of commands that greatly simplify working with
 Amazon EC2 cloud instances.
